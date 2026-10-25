@@ -1,0 +1,21 @@
+# Suggested review owners by module. Owners must have write access for GitHub review requests.
+# Pairing a lead with a supporter avoids blocking PRs authored by the lead.
+/lib/app/                      @cavdara549-create @serhatvs
+/lib/core/                     @serhatvs @sukrucanozturk98
+/lib/features/auth/            @sukrucanozturk98 @cavdara549-create
+/lib/features/exploration/     @sukrucanozturk98 @serhatvs
+/lib/features/camera/          @cavdara549-create @serhatvs
+/lib/features/cards/           @serhatvs @kadirzongur64-byte
+/lib/features/collection/      @cavdara549-create @sukrucanozturk98
+/lib/features/battle/          @kadirzongur64-byte @cavdara549-create
+/ml/                           @serhatvs @cavdara549-create
+/evaluation/                   @kadirzongur64-byte @serhatvs
+/test/                         @serhatvs @sukrucanozturk98
+/integration_test/             @cavdara549-create @kadirzongur64-byte
+/android/                      @cavdara549-create @sukrucanozturk98
+/docs/                         @serhatvs @sukrucanozturk98
+/docs/adr/                     @serhatvs @cavdara549-create @sukrucanozturk98 @kadirzongur64-byte
+/.github/                      @serhatvs @sukrucanozturk98
+/TEAM.md                       @serhatvs @cavdara549-create @sukrucanozturk98 @kadirzongur64-byte
+/AGENTS.md                     @serhatvs @kadirzongur64-byte
+/CONTRIBUTING.md               @serhatvs @sukrucanozturk98

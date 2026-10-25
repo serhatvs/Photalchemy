@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify repository governance documents
+        run: |
+          for file in README.md TEAM.md CONTRIBUTING.md AGENTS.md docs/ARCHITECTURE.md .github/CODEOWNERS .github/PULL_REQUEST_TEMPLATE.md; do
+            test -s "$file" || { echo "::error file=$file::Required document missing or empty"; exit 1; }
+          done
+
+      # Flutter commands start working as soon as flutter create initializes pubspec.yaml.
+      # Until then this job checks the repository's documentation structure.
+      - name: Install Flutter
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Fetch Flutter packages
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
+        run: flutter pub get
+
+      - name: Analyze Flutter sources
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
+        run: flutter analyze
+
+      - name: Run Flutter tests
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
+        run: flutter test
