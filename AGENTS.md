@@ -8,7 +8,7 @@ Photalchemy is a planned Flutter/Dart mobile game: real-world photo capture → 
 
 ## Before making changes
 
-1. Read `README.md`, `CONTRIBUTING.md`, `TEAM.md`, and `docs/ARCHITECTURE.md`.
+1. Read `README.md`, `CONTRIBUTING.md`, `TEAM.md`, `SECURITY.md`, `PRIVACY.md`, `QUALITY.md`, `TESTING.md`, and `docs/ARCHITECTURE.md`.
 2. Work only on a task branch with a linked issue; **never push/commit directly to `main`** or merge without human review.
 3. Identify the module owner and keep the change within the requested scope.
 4. For architecture or API changes, write the contract and request teammate agreement.

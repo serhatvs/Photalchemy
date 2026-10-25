@@ -20,7 +20,7 @@ jobs:
 
       - name: Verify repository governance documents
         run: |
-          for file in README.md TEAM.md CONTRIBUTING.md AGENTS.md docs/ARCHITECTURE.md .github/CODEOWNERS .github/PULL_REQUEST_TEMPLATE.md; do
+          for file in README.md TEAM.md CONTRIBUTING.md AGENTS.md SECURITY.md QUALITY.md TESTING.md PRIVACY.md docs/ARCHITECTURE.md .github/CODEOWNERS .github/PULL_REQUEST_TEMPLATE.md; do
             test -s "$file" || { echo "::error file=$file::Required document missing or empty"; exit 1; }
           done
 
@@ -35,6 +35,10 @@ jobs:
       - name: Fetch Flutter packages
         if: ${{ hashFiles('pubspec.yaml') != '' }}
         run: flutter pub get
+
+      - name: Verify Dart formatting
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
+        run: dart format --output=none --set-exit-if-changed lib test integration_test
 
       - name: Analyze Flutter sources
         if: ${{ hashFiles('pubspec.yaml') != '' }}

@@ -21,6 +21,8 @@ Commands run / results:
 - [ ] Changes to shared contracts were discussed with affected owners.
 - [ ] No credentials, sensitive user data, private photos or datasets are included.
 - [ ] Documentation updated for changed behavior or architecture.
+- [ ] I checked the relevant [security](../SECURITY.md), [privacy](../PRIVACY.md), and [quality](../QUALITY.md) requirements.
+- [ ] Relevant positive **and negative** cases are tested (see [TESTING.md](../TESTING.md)), or gaps are noted.
 
 ## AI-assisted development (if applicable and permitted)
 - AI used? Yes / No

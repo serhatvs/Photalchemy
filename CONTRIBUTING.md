@@ -1,6 +1,6 @@
 # Contributing to Photalchemy
 
-This is a **four-person COMP205 project**. Keep the process light, reviewable and fair. See [TEAM.md](TEAM.md) for primary owners, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for module boundaries, and [AGENTS.md](AGENTS.md) for AI-assistant rules.
+This is a **four-person COMP205 project**. Keep the process light, reviewable and fair. See [TEAM.md](TEAM.md) for primary owners, [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for module boundaries, [SECURITY.md](SECURITY.md) and [PRIVACY.md](PRIVACY.md) for safety, [QUALITY.md](QUALITY.md) and [TESTING.md](TESTING.md) for quality gates, and [AGENTS.md](AGENTS.md) for AI-assistant rules.
 
 ## Non-negotiable rules
 
@@ -56,6 +56,8 @@ Do not use `git push --force` to bypass review. Fix conflicts on your branch, no
 - **Kadir:** battle engine, dungeon gameplay, tool-calling enemy agent and evaluation.
 
 Ownership is **responsibility, not exclusivity**. Any teammate may contribute with the owner's collaboration and review. For detailed paired reviews, see `.github/CODEOWNERS` and `TEAM.md`.
+
+For every PR, consult [QUALITY.md](QUALITY.md) for the definition of done and [SECURITY.md](SECURITY.md) for risk checks; include the test evidence described in [TESTING.md](TESTING.md).
 
 ## Definition of done
 
