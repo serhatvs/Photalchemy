@@ -41,7 +41,7 @@ Further card attributes, effects, and balancing rules are subject to prototyping
 
 ### Dungeon Battles
 
-Combat is designed around **turn-based card choices**, with enemies that respond to the player's strategy. **AI-assisted enemy decision-making** is being considered; the final approach has not yet been selected.
+Combat is designed around **turn-based card choices**, with enemies that respond to the player's strategy. **The enemy's objective is to understand the available cards, make strategic decisions, and defeat the player**. Two AI approaches are planned: a trained gameplay policy (Track A) and a tool-calling language-model agent (Track B). Neither may alter battle rules or use hidden player information.
 
 ## Why Photalchemy?
 
@@ -57,12 +57,12 @@ Photalchemy is being developed as a four-person term project for **COMP205 Mobil
 | --- | --- |
 | Mobile application | Flutter and Dart |
 | Backend | Firebase Authentication, Cloud Firestore and Firebase Cloud Messaging (FCM) |
-| Track A — own-trained ML/DL | Train a photo-analysis model on an appropriate labeled dataset; compare it with a baseline; report grouped cross-validation, confidence interval and a model card |
+| Track A — own-trained ML/DL | Train a battle action-scoring policy on simulated games; evaluate win rate against random/heuristic opponents using grouped validation, confidence intervals and a model card |
 | Track B — Generative AI | Develop a tool-calling dungeon enemy agent and evaluate at least **20** predefined scenarios/queries |
 | Engineering quality | Automated tests, GitHub Actions continuous integration and code reviews |
 | Deliverables | Signed release APK, README, `TEAM.md`, `AGENTS.md` and AI Decision Records (ADRs) |
 
-**Important:** The AI features in this table are proposed implementations of the required tracks, **not completed features**. Simple rule-based color extraction alone would not count as an own-trained model, and a rule-based enemy alone would not count as a GenAI tool-calling agent.
+**Important:** The AI features in this table are proposed implementations of the required tracks, **not completed features**. The color-based card generator is a deterministic gameplay mechanic, not Track A. A fixed-rule enemy is not an own-trained model; Track B requires an actual generative tool-calling agent.
 
 The syllabus requires **both AI tracks in depth for a four-person team**. P1, P2 and P3 each require **three ADRs**, documenting an AI prompt, the resulting code change and at least one rejected suggestion with justification. Everyone must understand and be able to explain their own contributions at the individual oral defense.
 
@@ -75,13 +75,13 @@ Dates follow the COMP205 Fall 2026 syllabus. Tasks are planned, not yet complete
 - [ ] Agree on gameplay rules and interfaces between modules.
 - [ ] Create Flutter screens, routes and mock card/battle data (Ali).
 - [ ] Set up Firebase Authentication, Firestore models/security rules and notification scaffolding (Şükrü).
-- [ ] Prototype deterministic photo features and define the training dataset / evaluation protocol (Serhat).
+- [ ] Prototype deterministic photo features, define enemy-policy observation schema and synthetic battle dataset/evaluation protocol (Serhat + Kadir).
 - [ ] Implement a testable turn-based battle-state skeleton and mock enemy actions (Kadir).
 - [ ] Configure CI, automated tests, repository documentation and P1 ADRs (Serhat + Şükrü, with contributions from everyone).
 
 ### P2 — AI Implementation Progress (25 December 2026)
 
-- [ ] Train and evaluate the photo model, with baseline, grouped validation and model card (Serhat).
+- [ ] Train and evaluate the competitive battle policy (Track A), using held-out match win rate, baselines, grouped validation and model card (Serhat).
 - [ ] Implement the tool-calling enemy agent, its guarded battle tools and a 20+ case evaluation set (Kadir).
 - [ ] Integrate camera capture, card inventory and battle UI with live game state (Ali).
 - [ ] Connect persisted cards, user data and location-aware rarity to backend services (Şükrü).
@@ -108,6 +108,8 @@ Development uses **short-lived feature branches**, GitHub Issues and reviewed pu
 - [Data minimization and privacy design](PRIVACY.md)
 - [Team working agreement and responsibilities](TEAM.md)
 - [Proposed module structure and data flow](docs/ARCHITECTURE.md)
+- [Card-domain contract proposal](docs/CARD_CONTRACT.md)
+- [Track A training and evaluation plan](ml/TRACK_A_PLAN.md)
 - [AI coding assistant instructions](AGENTS.md)
 - [AI Decision Record guidance](docs/adr/README.md)
 - [Track A model workspace](ml/README.md) and [Track B evaluation workspace](evaluation/README.md)
@@ -136,7 +138,7 @@ The four team members each own a primary area, while reviewing and supporting ot
 
 | Member | Role | Primary responsibilities |
 | --- | --- | --- |
-| [Serhat Yavuz](https://github.com/serhatvs) | **AI/ML & Architecture Lead** | Track A dataset, own-trained image model, evaluation and model card; photo-to-card logic; architecture and interfaces; AI Decision Records and quality coordination |
+| [Serhat Yavuz](https://github.com/serhatvs) | **AI/ML & Architecture Lead** | Track A own-trained competitive battle policy, simulation dataset, evaluation and model card; color-to-card logic; architecture and interfaces; AI Decision Records and quality coordination |
 | [Ali Çavdar](https://github.com/cavdara549-create) | **Flutter & UI/UX Lead** | Navigation, visual design, camera capture, card collection, battle screens and animations; widget tests and release interface |
 | [Şükrü Öztürk](https://github.com/sukrucanozturk98) | **Backend & Cloud Lead** | Firebase Auth, Firestore, security rules, notifications, player profiles and card persistence; location-based rarity, backend tests and CI support |
 | [Kadir Zongur](https://github.com/kadirzongur64-byte) | **Gameplay & GenAI Lead** | Turn-based battle engine, card effects, dungeon encounters, enemy tool-calling agent (Track B), its 20+ evaluation scenarios and gameplay tests |
@@ -145,7 +147,8 @@ The four team members each own a primary area, while reviewing and supporting ot
 
 | Subsystem | Primary owner | Supporting member |
 | --- | --- | --- |
-| Photo analysis and trained ML model | Serhat | Ali |
+| Photo color statistics and card generation | Serhat | Ali
+| Trained battle-policy AI (Track A) | Serhat | Kadir |
 | Card generation and attributes | Serhat | Kadir |
 | Flutter UI, camera and navigation | Ali | Serhat |
 | Battle screens and animations | Ali | Kadir |
