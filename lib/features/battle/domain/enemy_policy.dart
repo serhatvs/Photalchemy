@@ -30,9 +30,14 @@ class EnemyObservation {
     required this.playerHp,
     required this.enemyShield,
     required this.playerShield,
+    required this.turnNumber,
+    required this.playerStunned,
+    required this.enemyStunned,
+    this.lastObservedPlayerCard,
     required List<LegalEnemyAction> legalActions,
   }) : legalActions = List.unmodifiable(legalActions) {
-    if (enemyHp < 0 || playerHp < 0 || enemyShield < 0 || playerShield < 0) {
+    if (enemyHp < 0 || playerHp < 0 || enemyShield < 0 || playerShield < 0 ||
+        turnNumber < 0) {
       throw RangeError('Health and shield values must be nonnegative');
     }
     if (this.legalActions.map((a) => a.id).toSet().length !=
@@ -45,6 +50,10 @@ class EnemyObservation {
   final int playerHp;
   final int enemyShield;
   final int playerShield;
+  final int turnNumber;
+  final bool playerStunned;
+  final bool enemyStunned;
+  final CardType? lastObservedPlayerCard;
   final List<LegalEnemyAction> legalActions;
 }
 

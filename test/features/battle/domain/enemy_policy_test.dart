@@ -15,9 +15,13 @@ void main() {
       playerHp: 4,
       enemyShield: 0,
       playerShield: 0,
+      turnNumber: 1,
+      playerStunned: false,
+      enemyStunned: false,
       legalActions: [attack],
     );
     expect(validateEnemyAction(observation, 'play-attack'), same(attack));
+    expect(observation.turnNumber, 1);
     expect(
       () => validateEnemyAction(observation, 'make-me-invincible'),
       throwsArgumentError,
@@ -37,6 +41,9 @@ void main() {
         playerHp: 10,
         enemyShield: 0,
         playerShield: 0,
+        turnNumber: 1,
+        playerStunned: false,
+        enemyStunned: false,
         legalActions: [attack('a')],
       ),
       throwsRangeError,
@@ -47,6 +54,9 @@ void main() {
         playerHp: 10,
         enemyShield: 0,
         playerShield: 0,
+        turnNumber: 1,
+        playerStunned: false,
+        enemyStunned: false,
         legalActions: [attack('a'), attack('a')],
       ),
       throwsArgumentError,
@@ -64,6 +74,9 @@ void main() {
       playerHp: 10,
       enemyShield: 0,
       playerShield: 0,
+      turnNumber: 1,
+      playerStunned: false,
+      enemyStunned: false,
       legalActions: external,
     );
     external.add(

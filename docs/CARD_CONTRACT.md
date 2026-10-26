@@ -23,7 +23,7 @@ Battle state + enemy hand + public player information
 - `PhotoFeatures`: normalized brightness/saturation/contrast in [0,1].
 - `PhotoAnalyzer`: interface that converts camera bytes into `PhotoFeatures`; actual photo decode/permission adapter is not implemented.
 - `CardGenerator`: deterministic provisional priority: contrast ≥0.60 → reflect; otherwise brightness ≥0.65 → attack; otherwise saturation ≥0.65 → stun; otherwise defense. Strength is bounded, with a rarity modifier. **These thresholds are design placeholders to approve with the team, not trained ML.**
-- `LegalEnemyAction`: action ID, card type, strength, human-readable effect. `EnemyObservation`: enemy/player HP, visible shields, allowed actions; no hidden player hand.
+- `LegalEnemyAction`: action ID, card type, strength, human-readable effect. `EnemyObservation`: enemy/player HP, visible shields, current turn number, stun flags, last publicly played player card (if known), and allowed actions; no hidden player hand.
 - `EnemyPolicy.chooseAction`: model chooses an action ID. `validateEnemyAction` rejects any hallucinated/illegal ID, and only Kadir's deterministic engine may change game state.
 
 ## Division of work
