@@ -30,9 +30,7 @@ class ColorFeatureExtractor {
           (0.2126 * p.red + 0.7152 * p.green + 0.0722 * p.blue) / 255;
       final maxValue = math.max(p.red, math.max(p.green, p.blue));
       final minValue = math.min(p.red, math.min(p.green, p.blue));
-      final saturation = maxValue == 0
-          ? 0.0
-          : (maxValue - minValue) / maxValue;
+      final saturation = maxValue == 0 ? 0.0 : (maxValue - minValue) / maxValue;
 
       meanSaturation += (saturation - meanSaturation) / count;
       final delta = brightness - meanBrightness;

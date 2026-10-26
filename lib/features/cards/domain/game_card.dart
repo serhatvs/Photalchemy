@@ -2,6 +2,7 @@
 ///
 /// The name GameCard avoids a collision with Flutter's Material Card widget.
 enum CardType { attack, defense, stun, reflect }
+
 enum CardRarity { common, uncommon, rare, epic }
 
 class CardStats {
@@ -29,7 +30,8 @@ class GameCard {
       throw ArgumentError.value(ownerId, 'ownerId', 'Cannot be empty');
     }
     if (modelVersion.trim().isEmpty) {
-      throw ArgumentError.value(modelVersion, 'modelVersion', 'Cannot be empty');
+      throw ArgumentError.value(
+          modelVersion, 'modelVersion', 'Cannot be empty');
     }
   }
 
