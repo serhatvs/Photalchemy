@@ -1,22 +1,14 @@
-# Track A — Own-trained photo model
+# Track A — Own-trained battle policy
 
-**Owner:** Serhat Yavuz (collaborates with Ali on camera/model integration).
+**Owner:** Serhat Yavuz, collaborating with Kadir on rules, legal actions, and battle simulation.
 
-This directory will contain reproducible **training/preprocessing/evaluation code**, model metadata and a model card. It is not yet implemented.
+Train and evaluate a model that **uses the available card types strategically, chooses legal actions and tries to defeat the player**. Track A is no longer a photo-scene classifier. Color-to-card generation is deterministic and belongs to the normal game domain.
 
-### Required evidence
-- Explain data provenance, consent/licensing and labels.
-- Separate train/test groups to avoid leakage; use grouped cross-validation where appropriate.
-- Compare with an explicit baseline and report metrics with confidence intervals.
-- Record model architecture, limitations, failure examples and inference requirements in a model card.
-- Export a versioned mobile-compatible model if on-device inference is chosen.
-
-**Do not commit:** private photographs, unconsented data, access tokens, large datasets or automatically downloaded model weights. Store only safe scripts, small synthetic examples and documented acquisition steps. The precise prediction task is still a team design decision.
-
-### Current proposal for Issue #5
-
-- [Track A dataset, training and evaluation plan](TRACK_A_PLAN.md)
-- [Manifest schema (header only)](dataset_manifest_schema.csv)
+Read:
+- [Competitive opponent training/evaluation plan](TRACK_A_PLAN.md)
+- [Synthetic battle-decision manifest schema](dataset_manifest_schema.csv)
 - [Model card template](MODEL_CARD_TEMPLATE.md)
 
-No actual training images, model weights or evaluation metrics are present.
+The model needs reproducible simulated battles, independent baselines, grouped validation, win-rate metrics with uncertainty, a model card and honest failure analysis. No battle dataset, trained weights, learned policy or measured win rate exists yet.
+
+Do not commit private player data, photo datasets, credentials or large generated datasets.

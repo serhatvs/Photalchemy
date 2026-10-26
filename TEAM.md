@@ -8,7 +8,7 @@
 
 | Member | GitHub | Primary responsibilities | Main collaboration |
 | --- | --- | --- | --- |
-| Serhat Yavuz | [@serhatvs](https://github.com/serhatvs) | Own-trained photo model (Track A), card generation, architecture, model evaluation, code-quality coordination | Ali (camera-to-model), Kadir (card rules and agent) |
+| Serhat Yavuz | [@serhatvs](https://github.com/serhatvs) | Own-trained competitive battle policy (Track A), color-to-card generator, architecture, model evaluation and quality coordination | Ali (photo capture/color adapter), Kadir (battle engine/legal moves) |
 | Ali Çavdar | [@cavdara549-create](https://github.com/cavdara549-create) | Flutter UI/UX, navigation, camera, inventory and battle screens, widget tests | Serhat (inference), Kadir (battle state) |
 | Şükrü Öztürk | [@sukrucanozturk98](https://github.com/sukrucanozturk98) | Firebase Auth, Firestore, security rules, FCM, player persistence and location rarity | Ali (UI data), Serhat (rarity rules) |
 | Kadir Zongur | [@kadirzongur64-byte](https://github.com/kadirzongur64-byte) | Turn-based combat, cards/effects integration, dungeon systems, GenAI enemy agent (Track B), 20+ evaluation scenarios | Ali (battle UI), Serhat (card/domain boundaries) |

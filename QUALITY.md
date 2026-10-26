@@ -37,7 +37,7 @@ A PR is mergeable only when:
 | Firebase | Authentication/session behavior, deny-by-default rules, negative cross-user access tests |
 | Flutter UX | Widget tests for major screens and required loading/denied/empty states |
 | Location | Opt-out, permission denial, coarse handling and repeated-location rarity boundaries |
-| Track A | Provenance; grouped train/test splits; baseline, metrics and uncertainty; model card |
+| Track A | Own-trained enemy policy; synthetic-match provenance; grouped split, held-out win rate vs baselines, uncertainty and model card |
 | Track B | 20+ scenario/query evaluations; legal-tool validation, bad-output and timeout fallback tests |
 | Delivery | Installable signed APK, a documented emulator demo path and checked release configuration |
 

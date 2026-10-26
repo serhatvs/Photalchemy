@@ -1,41 +1,44 @@
 import 'game_card.dart';
 import 'photo_analysis.dart';
 
-/// Transparent gameplay mapping. It is not the custom-trained ML model.
+/// Transparent, deterministic photo-to-card prototype.
 ///
-/// Proposed scene-to-class assignment should be approved with the battle lead
-/// before being treated as final gameplay balance.
+/// The thresholds are provisional gameplay values, NOT an ML classifier.
+/// Own-trained Track A will learn ENEMY GAMEPLAY POLICY, not photo categories.
 class CardGenerator {
   const CardGenerator();
 
   GameCard generate({
     required String id,
     required String ownerId,
-    required PhotoAnalysis analysis,
+    required PhotoFeatures features,
     required CardRarity rarity,
   }) {
-    final type = switch (analysis.prediction.category) {
-      SceneCategory.nature => CardType.defense,
-      SceneCategory.urban => CardType.reflect,
-      SceneCategory.interior => CardType.stun,
-      SceneCategory.objectCloseup => CardType.attack,
-    };
+    // Priority resolves overlap deterministically; exact balance remains TBD.
+    final CardType type;
+    if (features.contrast >= 0.6) {
+      type = CardType.reflect;
+    } else if (features.brightness >= 0.65) {
+      type = CardType.attack;
+    } else if (features.saturation >= 0.65) {
+      type = CardType.stun;
+    } else {
+      type = CardType.defense;
+    }
 
-    final features = analysis.features;
-    final rawStrength = 1 +
-        (4 * features.brightness +
-                3 * features.saturation +
-                2 * features.contrast)
-            .round() +
-        rarity.index;
+    final score = (4 * features.brightness +
+            3 * features.saturation +
+            2 * features.contrast)
+        .round();
+    final strength = (1 + score + rarity.index).clamp(1, 10).toInt();
 
     return GameCard(
       id: id,
       ownerId: ownerId,
       type: type,
       rarity: rarity,
-      stats: CardStats(strength: rawStrength.clamp(1, 10).toInt()),
-      modelVersion: analysis.prediction.modelVersion,
+      stats: CardStats(strength: strength),
+      generationVersion: 'color-v0',
     );
   }
 }
