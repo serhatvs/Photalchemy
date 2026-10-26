@@ -1,6 +1,6 @@
-/// Immutable, persistence-neutral data contract for a generated battle card.
+/// Metadata for a card generated from photo color features.
 ///
-/// The name GameCard avoids a collision with Flutter's Material Card widget.
+/// Named GameCard to avoid Flutter Material's Card type.
 enum CardType { attack, defense, stun, reflect }
 
 enum CardRarity { common, uncommon, rare, epic }
@@ -10,7 +10,7 @@ class CardStats {
     RangeError.checkValueInInterval(strength, 1, 10, 'strength');
   }
 
-  /// Provisional shared magnitude. Kadir will define effect-specific semantics.
+  /// Provisional magnitude: effect-specific use must be agreed with Kadir.
   final int strength;
 }
 
@@ -21,7 +21,7 @@ class GameCard {
     required this.type,
     required this.rarity,
     required this.stats,
-    required this.modelVersion,
+    required this.generationVersion,
   }) {
     if (id.trim().isEmpty) {
       throw ArgumentError.value(id, 'id', 'Cannot be empty');
@@ -29,9 +29,12 @@ class GameCard {
     if (ownerId.trim().isEmpty) {
       throw ArgumentError.value(ownerId, 'ownerId', 'Cannot be empty');
     }
-    if (modelVersion.trim().isEmpty) {
+    if (generationVersion.trim().isEmpty) {
       throw ArgumentError.value(
-          modelVersion, 'modelVersion', 'Cannot be empty');
+        generationVersion,
+        'generationVersion',
+        'Cannot be empty',
+      );
     }
   }
 
@@ -40,7 +43,7 @@ class GameCard {
   final CardType type;
   final CardRarity rarity;
   final CardStats stats;
-  final String modelVersion;
+  final String generationVersion;
 
-  // No original photo, EXIF coordinates or raw precise location stored here.
+  // Intentionally no raw photo, EXIF or coordinates.
 }

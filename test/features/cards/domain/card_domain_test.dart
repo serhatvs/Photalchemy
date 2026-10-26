@@ -22,7 +22,7 @@ void main() {
     expect(white.contrast, 0);
   });
 
-  test('pixel contrast and saturation are reproducible', () {
+  test('mixed extremes and saturated red are reproducible', () {
     final pixels = [
       RgbPixel(red: 0, green: 0, blue: 0),
       RgbPixel(red: 255, green: 255, blue: 255),
@@ -36,19 +36,10 @@ void main() {
     expect(red.saturation, closeTo(1, 1e-10));
   });
 
-  test('invalid pixels and empty samples are rejected', () {
-    expect(
-      () => RgbPixel(red: -1, green: 0, blue: 0),
-      throwsRangeError,
-    );
-    expect(
-      () => RgbPixel(red: 0, green: 256, blue: 0),
-      throwsRangeError,
-    );
+  test('invalid pixels and empty inputs fail', () {
+    expect(() => RgbPixel(red: -1, green: 0, blue: 0), throwsRangeError);
+    expect(() => RgbPixel(red: 0, green: 256, blue: 0), throwsRangeError);
     expect(() => extractor.extract(<RgbPixel>[]), throwsArgumentError);
-  });
-
-  test('non-finite and out-of-range features/confidence are rejected', () {
     expect(
       () => PhotoFeatures(brightness: double.nan, saturation: 0, contrast: 0),
       throwsRangeError,
@@ -57,86 +48,61 @@ void main() {
       () => PhotoFeatures(brightness: 0, saturation: 1.1, contrast: 0),
       throwsRangeError,
     );
-    expect(
-      () => ScenePrediction(
-        category: SceneCategory.nature,
-        confidence: -0.1,
-        modelVersion: 'test',
-      ),
-      throwsRangeError,
-    );
-    expect(
-      () => ScenePrediction(
-        category: SceneCategory.nature,
-        confidence: 0.7,
-        modelVersion: ' ',
-      ),
-      throwsArgumentError,
-    );
   });
 
-  test('all proposed scene classes map to legal card types', () {
-    const expected = {
-      SceneCategory.nature: CardType.defense,
-      SceneCategory.urban: CardType.reflect,
-      SceneCategory.interior: CardType.stun,
-      SceneCategory.objectCloseup: CardType.attack,
+  test('color features produce each provisional card type', () {
+    final examples = <CardType, PhotoFeatures>{
+      CardType.attack:
+          PhotoFeatures(brightness: 0.8, saturation: 0.3, contrast: 0.2),
+      CardType.defense:
+          PhotoFeatures(brightness: 0.3, saturation: 0.3, contrast: 0.2),
+      CardType.stun:
+          PhotoFeatures(brightness: 0.3, saturation: 0.8, contrast: 0.2),
+      CardType.reflect:
+          PhotoFeatures(brightness: 0.3, saturation: 0.2, contrast: 0.8),
     };
-
-    for (final entry in expected.entries) {
+    for (final entry in examples.entries) {
       final card = generator.generate(
-        id: 'card-1',
-        ownerId: 'test-user',
+        id: 'c',
+        ownerId: 'user',
         rarity: CardRarity.common,
-        analysis: PhotoAnalysis(
-          features:
-              PhotoFeatures(brightness: 0.5, saturation: 0.5, contrast: 0.5),
-          prediction: ScenePrediction(
-            category: entry.key,
-            confidence: 0.8,
-            modelVersion: 'example-v0',
-          ),
-        ),
+        features: entry.value,
       );
-      expect(card.type, entry.value);
+      expect(card.type, entry.key);
       expect(card.stats.strength, inInclusiveRange(1, 10));
+      expect(card.generationVersion, 'color-v0');
     }
   });
 
-  test('generation is deterministic and rarity changes strength', () {
-    final analysis = PhotoAnalysis(
-      features: PhotoFeatures(brightness: 0.3, saturation: 0.5, contrast: 0.2),
-      prediction: ScenePrediction(
-        category: SceneCategory.objectCloseup,
-        confidence: 0.9,
-        modelVersion: 'candidate-v0',
-      ),
-    );
-    final first = generator.generate(
-      id: 'c',
-      ownerId: 'u',
-      analysis: analysis,
+  test('overlapping photo features have deterministic priority', () {
+    final card = generator.generate(
+      id: 'overlap',
+      ownerId: 'player',
       rarity: CardRarity.common,
+      features: PhotoFeatures(brightness: 1, saturation: 1, contrast: 1),
     );
-    final second = generator.generate(
-      id: 'c',
-      ownerId: 'u',
-      analysis: analysis,
-      rarity: CardRarity.common,
-    );
-    final rare = generator.generate(
-      id: 'c',
-      ownerId: 'u',
-      analysis: analysis,
-      rarity: CardRarity.rare,
-    );
-    expect(first.type, second.type);
-    expect(first.stats.strength, second.stats.strength);
-    expect(rare.stats.strength, greaterThan(first.stats.strength));
-    expect(rare.stats.strength, lessThanOrEqualTo(10));
+    expect(card.type, CardType.reflect);
+    expect(card.stats.strength, 10);
   });
 
-  test('rejects malformed card identifiers and stats', () {
+  test('repeat generation is stable and rarity increases strength', () {
+    final features =
+        PhotoFeatures(brightness: 0.2, saturation: 0.4, contrast: 0.2);
+    GameCard makeCard(CardRarity rarity) => generator.generate(
+      id: 'stable',
+      ownerId: 'player',
+      features: features,
+      rarity: rarity,
+    );
+    final common = makeCard(CardRarity.common);
+    final repeated = makeCard(CardRarity.common);
+    final rare = makeCard(CardRarity.rare);
+    expect(common.type, repeated.type);
+    expect(common.stats.strength, repeated.stats.strength);
+    expect(rare.stats.strength, greaterThan(common.stats.strength));
+  });
+
+  test('invalid card metadata and stats fail', () {
     expect(() => CardStats(strength: 0), throwsRangeError);
     expect(() => CardStats(strength: 11), throwsRangeError);
     expect(
@@ -146,26 +112,9 @@ void main() {
         type: CardType.attack,
         rarity: CardRarity.common,
         stats: CardStats(strength: 2),
-        modelVersion: 'v0',
+        generationVersion: 'color-v0',
       ),
       throwsArgumentError,
     );
-  });
-
-  test('maximum feature values always generate a bounded card', () {
-    final card = generator.generate(
-      id: 'bounded',
-      ownerId: 'user',
-      rarity: CardRarity.epic,
-      analysis: PhotoAnalysis(
-        features: PhotoFeatures(brightness: 1, saturation: 1, contrast: 1),
-        prediction: ScenePrediction(
-          category: SceneCategory.urban,
-          confidence: 1,
-          modelVersion: 'v0',
-        ),
-      ),
-    );
-    expect(card.stats.strength, 10);
   });
 }

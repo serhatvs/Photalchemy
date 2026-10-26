@@ -1,44 +1,46 @@
-# Card generation contract — P1 proposal (Issue #5)
+# Photo-to-card and enemy-policy contracts — Issue #5
 
-**Status:** Functional Dart prototype; gameplay mapping and learned labels await team approval. Owner: Serhat; interfaces to agree with Ali (capture), Şükrü (storage/rarity), Kadir (battle).
+**Status:** P1 prototype. The user-defined AI goal is to **play cards strategically against the player and try to win**. The trained model is NOT a photo-scene classifier.
 
-## Proposed pipeline
+## Two separate flows
 
 ```text
-Camera image bytes [Ali]
-    → validate size/type + decode/image sample [not implemented]
-    → ColorFeatureExtractor(decoded RGB samples) [deterministic prototype]
-    → PhotoAnalyzer(image bytes) [interface only; train own model for Track A]
-    → ScenePrediction + PhotoFeatures
-    → CardGenerator + server/trusted rarity decision
-    → GameCard metadata (no raw photo or coordinates)
-    → Persistence adapter [Şükrü] → battle engine [Kadir]
+Real-world photo --(Ali: decode/perms)--> color features (brightness,
+  saturation, contrast) --(Serhat: deterministic mapping)--> GameCard
+  --(Şükrü: trusted validation/storage)--> Player inventory
+
+Battle state + enemy hand + public player information
+  --(Kadir: deterministic game engine lists legal actions)-->
+  EnemyObservation + legalActions
+        |--> Serhat: own-trained action scorer (Track A)
+        |--> Kadir: tool-calling LLM opponent (Track B)
+  --proposed action ID--> validateEnemyAction --> battle engine applies rules
 ```
 
-### Dart contracts
+## Card contract (provisional)
 
-- `PhotoAnalyzer.analyze(Uint8List)` returns `PhotoAnalysis(features, prediction)`; no image decoder, ML inference adapter or model is implemented yet.
-- `PhotoFeatures`: `brightness`, `saturation`, `contrast`, each finite and in **[0,1]**.
-- `ScenePrediction`: proposed `SceneCategory` (nature, urban, interior, objectCloseup), normalized confidence and nonempty model version.
-- `GameCard` (the conceptual Card type; named to avoid collision with Flutter's Material `Card` widget): id, ownerId, card type, rarity, strength, modelVersion. Does **not** hold image bytes, EXIF or location.
-- `CardStats.strength`: prototype integer **1–10**, not a confirmed battle damage formula.
-- `CardGenerator`: pure/deterministic mapping, no Firebase/camera/network dependency. Scene→type mapping for this prototype: nature→defense; urban→reflect; interior→stun; close-up object→attack. The proposed strength is clamped to 1–10 and incorporates normalized color features and rarity bonus.
+- `GameCard`: id, ownerId, `CardType` (attack/defense/stun/reflect), `CardRarity`, `CardStats.strength` (1–10) and `generationVersion=color-v0`.
+- `PhotoFeatures`: normalized brightness/saturation/contrast in [0,1].
+- `PhotoAnalyzer`: interface that converts camera bytes into `PhotoFeatures`; actual photo decode/permission adapter is not implemented.
+- `CardGenerator`: deterministic provisional priority: contrast ≥0.60 → reflect; otherwise brightness ≥0.65 → attack; otherwise saturation ≥0.65 → stun; otherwise defense. Strength is bounded, with a rarity modifier. **These thresholds are design placeholders to approve with the team, not trained ML.**
+- `LegalEnemyAction`: action ID, card type, strength, human-readable effect. `EnemyObservation`: enemy/player HP, visible shields, allowed actions; no hidden player hand.
+- `EnemyPolicy.chooseAction`: model chooses an action ID. `validateEnemyAction` rejects any hallucinated/illegal ID, and only Kadir's deterministic engine may change game state.
 
-## Responsibilities and boundaries
+## Division of work
 
-- **Ali:** camera permissions, capture UX, input validation and decoding; passes bytes to an adapter. No model or Firebase logic in widgets.
-- **Serhat:** features, trained Track A predictor/inference adapter, card generation validation.
-- **Şükrü:** trusted/authenticated owner ID and card ID generation/validation, location rarity decisions, Firestore rules and persistence. **Never trust a card's client-provided owner or rarity** for any valuable server operation.
-- **Kadir:** determines what strength means for attack/defense/stun/reflect, implements deterministic turn effects. LLM proposes legal enemy actions only; it does not mutate card stats.
+- **Serhat:** cards/colors/domain validation, own-trained battle-policy Track A and evaluation.
+- **Kadir:** deterministic battle engine, card effect semantics, legal move generation, Track B LLM agent and ≥20 scenarios.
+- **Ali:** capture/permission UI, photo decoding, collection and combat UI.
+- **Şükrü:** authenticated card persistence and safe location-based rarity. A mobile client must not be trusted to grant itself rarity, cards or ownership.
 
-## Decisions to confirm at interface review
+## Cross-module decisions before merge
 
-1. Do we want scene category to set card type, or should it instead affect a visual modifier while color sets type? The current code uses a **provisional mapping**, not a final product decision.
-2. Are nature/urban/interior/objectCloseup the right human-labeled classes for a dataset that can actually be collected and fairly evaluated?
-3. Is `strength 1–10` useful for all four card effects? Should we use effect-specific stats after battle-engine discussion?
-4. Does inference happen on device (LiteRT) or via authenticated backend? No unrestricted LLM or paid-provider key belongs in the app.
-5. How will rarity avoid repeated exact locations while minimizing collected geodata? Must work with location denied.
+1. Confirm how defense/stun/reflect affect turns, shields and damage, and how strength scales each effect.
+2. Confirm the visible state and fairness rules for the AI: which enemy/player cards can be seen, turn timing and legal options.
+3. Confirm color thresholds and whether rarity changes type or magnitude, without requiring learned photo classification.
+4. Confirm training data strategy: generated self-play/simulated battles on the *real* rules, preventing leakage by whole matches and seeds.
+5. Decide runtime for trained policy and for LLM tools; provide deterministic fallback for unavailable model/API.
 
-## Testing
+## Current limitations
 
-Pure Dart unit tests in `test/features/cards/domain/card_domain_test.dart` cover edge RGB samples, normalization, invalid values, deterministic generation, all four mappings and strength bounds. Actual camera/photo-decoder tests, trained-model evaluations and Firebase rules tests are intentionally not claimed here.
+These files implement color statistics, card metadata and **AI observation/tool boundary contracts only**. They do not implement image decoding, a battle engine, opponent strategy, trained weights or an integrated playable turn. Unit tests validate boundaries; no win rate can be claimed.

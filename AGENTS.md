@@ -19,7 +19,7 @@ Photalchemy is a planned Flutter/Dart mobile game: real-world photo capture → 
 - Use **feature-first Flutter organization**; small features may start flat and split into `data/`, `domain/` and `presentation/` only as needed.
 - Keep UI free of raw Firebase queries and model-training code. Wrap cloud, location, camera and inference services behind testable interfaces.
 - Battle rules/state transitions should be deterministic and testable; the LLM may **propose actions** but the game engine validates legal moves and computes results.
-- The trained photo model must have reproducible training/evaluation. Do not claim simple hand-authored color rules satisfy Track A.
+- Train an opponent action-selection policy from simulated battle data for Track A, with grouped match-level evaluation and actual win-rate comparisons. Photo color rules are normal gameplay, not Track A. Both Track A and Track B may propose ONLY legal actions; the engine decides results.
 - Track B needs an evaluation dataset of at least 20 cases and logged expected-versus-actual behavior.
 - Do not store raw precise location or upload photos without a defined need, user consent, and retention policy.
 - Never commit API keys, service accounts, tokens, personal photos, private recordings or large raw datasets.
