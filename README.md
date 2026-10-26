@@ -97,6 +97,23 @@ Dates follow the COMP205 Fall 2026 syllabus. Tasks are planned, not yet complete
 
 **Final demos and oral defenses:** 4 and 6 January 2027, according to the syllabus.
 
+## Repository Structure and Team Workflow
+
+Development uses **short-lived feature branches**, GitHub Issues and reviewed pull requests. **Do not push directly to `main`.** At least one other team member must approve and CI must pass before a squash merge. GitHub branch protection must also be enabled to enforce this policy.
+
+- [Contributor workflow and branch-protection setup](CONTRIBUTING.md)
+- [Security policy and vulnerability reporting](SECURITY.md)
+- [Code quality gates and release criteria](QUALITY.md)
+- [Testing strategy and verification commands](TESTING.md)
+- [Data minimization and privacy design](PRIVACY.md)
+- [Team working agreement and responsibilities](TEAM.md)
+- [Proposed module structure and data flow](docs/ARCHITECTURE.md)
+- [AI coding assistant instructions](AGENTS.md)
+- [AI Decision Record guidance](docs/adr/README.md)
+- [Track A model workspace](ml/README.md) and [Track B evaluation workspace](evaluation/README.md)
+
+The repository includes placeholder folders for the planned Flutter modules, but **the Flutter application itself has not been initialized yet**. Code owners are listed in [`.github/CODEOWNERS`](.github/CODEOWNERS); their review requests require appropriate GitHub repository access.
+
 ## Getting Started
 
 Photalchemy is currently in the **concept and planning phase**. No runnable application or installation instructions are available yet. Setup steps will be added when the first implementation is committed.
