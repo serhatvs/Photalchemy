@@ -5,7 +5,7 @@ import 'package:photalchemy/features/cards/domain/game_card.dart';
 import 'package:photalchemy/features/cards/domain/photo_analysis.dart';
 
 void main() {
-  final extractor = ColorFeatureExtractor();
+  const extractor = ColorFeatureExtractor();
   const generator = CardGenerator();
 
   test('black and white samples have expected normalized features', () {
