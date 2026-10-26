@@ -89,11 +89,11 @@ void main() {
     final features =
         PhotoFeatures(brightness: 0.2, saturation: 0.4, contrast: 0.2);
     GameCard makeCard(CardRarity rarity) => generator.generate(
-      id: 'stable',
-      ownerId: 'player',
-      features: features,
-      rarity: rarity,
-    );
+          id: 'stable',
+          ownerId: 'player',
+          features: features,
+          rarity: rarity,
+        );
     final common = makeCard(CardRarity.common);
     final repeated = makeCard(CardRarity.common);
     final rare = makeCard(CardRarity.rare);

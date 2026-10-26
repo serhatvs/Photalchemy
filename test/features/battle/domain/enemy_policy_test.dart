@@ -30,11 +30,11 @@ void main() {
 
   test('observation rejects invalid and duplicate legal actions', () {
     LegalEnemyAction attack(String id) => LegalEnemyAction(
-      id: id,
-      cardType: CardType.attack,
-      strength: 4,
-      effectDescription: 'Attack enemy.',
-    );
+          id: id,
+          cardType: CardType.attack,
+          strength: 4,
+          effectDescription: 'Attack enemy.',
+        );
     expect(
       () => EnemyObservation(
         enemyHp: -1,

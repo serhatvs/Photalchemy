@@ -36,7 +36,10 @@ class EnemyObservation {
     this.lastObservedPlayerCard,
     required List<LegalEnemyAction> legalActions,
   }) : legalActions = List.unmodifiable(legalActions) {
-    if (enemyHp < 0 || playerHp < 0 || enemyShield < 0 || playerShield < 0 ||
+    if (enemyHp < 0 ||
+        playerHp < 0 ||
+        enemyShield < 0 ||
+        playerShield < 0 ||
         turnNumber < 0) {
       throw RangeError('Health and shield values must be nonnegative');
     }
