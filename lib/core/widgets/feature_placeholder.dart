@@ -22,7 +22,11 @@ class FeaturePlaceholder extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 64, color: Theme.of(context).colorScheme.primary),
+              Icon(
+                icon,
+                size: 64,
+                color: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(height: 18),
               Text(title, style: Theme.of(context).textTheme.headlineSmall),
               const SizedBox(height: 12),
