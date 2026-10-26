@@ -108,6 +108,8 @@ Development uses **short-lived feature branches**, GitHub Issues and reviewed pu
 - [Data minimization and privacy design](PRIVACY.md)
 - [Team working agreement and responsibilities](TEAM.md)
 - [Proposed module structure and data flow](docs/ARCHITECTURE.md)
+- [Card-domain contract proposal](docs/CARD_CONTRACT.md)
+- [Track A training and evaluation plan](ml/TRACK_A_PLAN.md)
 - [AI coding assistant instructions](AGENTS.md)
 - [AI Decision Record guidance](docs/adr/README.md)
 - [Track A model workspace](ml/README.md) and [Track B evaluation workspace](evaluation/README.md)
