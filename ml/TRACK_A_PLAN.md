@@ -11,7 +11,7 @@ The **photo-to-card pipeline remains deterministic** using color statistics. It 
 ## Observation / action contract
 
 See `lib/features/battle/domain/enemy_policy.dart`:
-- Public view: enemy/player health, shields, and current set of allowed enemy actions, including type/strength/effect descriptions.
+- Public view: enemy/player health, shields, turn number, visible stun flags, last observed player card type, and current set of allowed enemy actions, including type/strength/effect descriptions.
 - A real engine (Kadir) determines full turn state, cooldowns, stun, legal actions, event transitions and victory. Expand the view only by agreement.
 - Model scores **only legal action IDs**. The battle engine validates again before applying. Player's hidden cards, deck order, photo EXIF and precise location are excluded.
 - Trainable output target: **estimated win probability / action value for each legal action**. At inference, choose the highest-scoring allowed action; a legal deterministic baseline provides offline fallback.
