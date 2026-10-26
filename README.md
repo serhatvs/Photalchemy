@@ -116,7 +116,19 @@ The repository includes placeholder folders for the planned Flutter modules, but
 
 ## Getting Started
 
-Photalchemy is currently in the **concept and planning phase**. No runnable application or installation instructions are available yet. Setup steps will be added when the first implementation is committed.
+Photalchemy's **initial Flutter UI shell** provides placeholder screens and navigation only. It is **not a complete playable game** and currently has no Firebase, camera, trained model or battle implementation.
+
+The first Flutter setup PR adds the Dart source and tests. Standard Android platform files must still be generated with the official Flutter CLI before running or building on Android:
+
+```bash
+flutter create --project-name photalchemy --platforms=android .
+flutter pub get
+flutter analyze
+flutter test
+flutter run
+```
+
+After generating the platform files, commit their required non-secret contents through a reviewed PR. Do not commit Android signing keys or local configuration files. See [Issue #3](https://github.com/serhatvs/Photalchemy/issues/3) for remaining Flutter bootstrap work.
 
 ## Team and Responsibilities
 
