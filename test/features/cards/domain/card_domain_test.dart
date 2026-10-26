@@ -89,7 +89,8 @@ void main() {
         ownerId: 'test-user',
         rarity: CardRarity.common,
         analysis: PhotoAnalysis(
-          features: PhotoFeatures(brightness: 0.5, saturation: 0.5, contrast: 0.5),
+          features:
+              PhotoFeatures(brightness: 0.5, saturation: 0.5, contrast: 0.5),
           prediction: ScenePrediction(
             category: entry.key,
             confidence: 0.8,

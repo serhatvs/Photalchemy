@@ -34,7 +34,8 @@ class ScenePrediction {
   }) {
     PhotoFeatures._requireNormalized(confidence, 'confidence');
     if (modelVersion.trim().isEmpty) {
-      throw ArgumentError.value(modelVersion, 'modelVersion', 'Cannot be empty');
+      throw ArgumentError.value(
+          modelVersion, 'modelVersion', 'Cannot be empty');
     }
   }
 
