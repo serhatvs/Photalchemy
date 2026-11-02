@@ -1,10 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:photalchemy/main.dart';
+import 'package:photalchemy/app/app.dart';
 
 void main() {
-  testWidgets('MainApp displays the initial screen', (WidgetTester tester) async {
-    await tester.pumpWidget(const MainApp());
+  testWidgets('PhotalchemyApp displays the initial screen', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(const PhotalchemyApp());
 
-    expect(find.text('Hello World!'), findsOneWidget);
+    expect(
+      find.text('Photo capture and exploration will be connected here.'),
+      findsOneWidget,
+    );
   });
 }
