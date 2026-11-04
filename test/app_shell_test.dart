@@ -18,7 +18,7 @@ void main() {
     // Navigate to Collection
     await tester.tap(find.byIcon(Icons.style_outlined));
     await tester.pumpAndSettle();
-    expect(find.text('No cards in collection yet'), findsOneWidget);
+    expect(find.text('starter-ember'), findsOneWidget);
 
     // Navigate to Battle
     await tester.tap(find.byIcon(Icons.shield_outlined));
@@ -32,9 +32,50 @@ void main() {
     expect(find.text('Sign in with Google'), findsOneWidget);
   });
 
+  testWidgets(
+    'AppShell connects Explore capture to Collection, Battle turns, and Account state',
+    (tester) async {
+      await tester.pumpWidget(const PhotalchemyApp());
+
+      // 1. Capture in Explore tab
+      await tester.tap(find.text('Capture & Transmute'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 700));
+      await tester.pumpAndSettle();
+      expect(find.byType(SnackBar), findsOneWidget);
+
+      // Dismiss SnackBar so it doesn't obscure bottom action controls in subsequent tabs
+      await tester.pump(const Duration(seconds: 3));
+      await tester.pumpAndSettle();
+
+      // 2. Collection has newly generated card
+      await tester.tap(find.byIcon(Icons.style_outlined));
+      await tester.pumpAndSettle();
+      expect(find.text('card-2'), findsOneWidget);
+
+      // 3. Play turn in Battle tab
+      await tester.tap(find.byIcon(Icons.shield_outlined));
+      await tester.pumpAndSettle();
+      expect(find.text('Turn 1'), findsOneWidget);
+      await tester.tap(find.text('slash (4)'));
+      await tester.pumpAndSettle();
+      expect(find.text('Turn 2'), findsOneWidget);
+
+      // 4. Sign in in Account tab
+      await tester.tap(find.byIcon(Icons.person_outline));
+      await tester.pumpAndSettle();
+      expect(find.text('Guest Alchemist'), findsOneWidget);
+      await tester.tap(find.text('Sign in with Google'));
+      await tester.pumpAndSettle();
+      expect(find.text('Alchemist Account'), findsOneWidget);
+      expect(find.text('alchemist@photalchemy.io'), findsOneWidget);
+    },
+  );
+
   group('CollectionPage widget states', () {
-    testWidgets('renders loading indicator when isLoading is true',
-        (tester) async {
+    testWidgets('renders loading indicator when isLoading is true', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         const MaterialApp(
             home: Scaffold(body: CollectionPage(isLoading: true))),
@@ -58,6 +99,13 @@ void main() {
       expect(find.text('Network timeout loading cards'), findsOneWidget);
       await tester.tap(find.text('Try Again'));
       expect(retried, isTrue);
+    });
+
+    testWidgets('renders empty state when card list is empty', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: CollectionPage(cards: []))),
+      );
+      expect(find.text('No cards in collection yet'), findsOneWidget);
     });
 
     testWidgets('renders card grid when cards are provided', (tester) async {
@@ -94,8 +142,9 @@ void main() {
   });
 
   group('BattlePage widget states', () {
-    testWidgets('renders HP, shields, turn number and action chips',
-        (tester) async {
+    testWidgets('renders HP, shields, turn number and action chips', (
+      tester,
+    ) async {
       LegalEnemyAction? selected;
       final action = LegalEnemyAction(
         id: 'fire-strike',
@@ -140,8 +189,9 @@ void main() {
   });
 
   group('ExplorePage widget states', () {
-    testWidgets('shows permission prompt when permission is denied',
-        (tester) async {
+    testWidgets('shows permission prompt when permission is denied', (
+      tester,
+    ) async {
       var permissionRequested = false;
       await tester.pumpWidget(
         MaterialApp(
@@ -197,8 +247,9 @@ void main() {
       expect(signedIn, isTrue);
     });
 
-    testWidgets('shows authenticated profile and sign out button',
-        (tester) async {
+    testWidgets('shows authenticated profile and sign out button', (
+      tester,
+    ) async {
       var signedOut = false;
       await tester.pumpWidget(
         MaterialApp(

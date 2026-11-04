@@ -147,7 +147,7 @@ The four team members each own a primary area, while reviewing and supporting ot
 
 | Subsystem | Primary owner | Supporting member |
 | --- | --- | --- |
-| Photo color statistics and card generation | Serhat | Ali
+| Photo color statistics and card generation | Serhat | Ali |
 | Trained battle-policy AI (Track A) | Serhat | Kadir |
 | Card generation and attributes | Serhat | Kadir |
 | Flutter UI, camera and navigation | Ali | Serhat |
