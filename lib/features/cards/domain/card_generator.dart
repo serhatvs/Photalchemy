@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+import 'color_feature_extractor.dart';
 import 'game_card.dart';
 import 'photo_analysis.dart';
 
@@ -6,7 +8,9 @@ import 'photo_analysis.dart';
 /// The thresholds are provisional gameplay values, NOT an ML classifier.
 /// Own-trained Track A will learn ENEMY GAMEPLAY POLICY, not photo categories.
 class CardGenerator {
-  const CardGenerator();
+  const CardGenerator({this.version = 'color-v0'});
+
+  final String version;
 
   GameCard generate({
     required String id,
@@ -38,7 +42,28 @@ class CardGenerator {
       type: type,
       rarity: rarity,
       stats: CardStats(strength: strength),
-      generationVersion: 'color-v0',
+      generationVersion: version,
+    );
+  }
+
+  /// Convenience method that extracts color features and creates a card in one step.
+  GameCard generateFromBytes({
+    required String id,
+    required String ownerId,
+    required Uint8List bytes,
+    required CardRarity rarity,
+    int bytesPerPixel = 3,
+    ColorFeatureExtractor extractor = const ColorFeatureExtractor(),
+  }) {
+    final features = extractor.extractFromBytes(
+      bytes,
+      bytesPerPixel: bytesPerPixel,
+    );
+    return generate(
+      id: id,
+      ownerId: ownerId,
+      features: features,
+      rarity: rarity,
     );
   }
 }

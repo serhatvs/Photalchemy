@@ -52,32 +52,29 @@ void main() {
   });
 
   test(
-      'large uniform pixel set does not trigger floating point NaN in contrast',
-      () {
-    // 500 identical pixels: variance is exactly 0.0, float drift must not yield NaN
-    final uniformPixels = List.generate(
-      500,
-      (_) => RgbPixel(red: 120, green: 120, blue: 120),
-    );
-    final features = extractor.extract(uniformPixels);
-    expect(features.contrast, 0.0);
-    expect(features.contrast.isFinite, isTrue);
-  });
+    'large uniform pixel set does not trigger floating point NaN in contrast',
+    () {
+      final uniformPixels = List.generate(
+        500,
+        (_) => RgbPixel(red: 120, green: 120, blue: 120),
+      );
+      final features = extractor.extract(uniformPixels);
+      expect(features.contrast, 0.0);
+      expect(features.contrast.isFinite, isTrue);
+    },
+  );
 
   test('extractFromBytes extracts features from RGB and RGBA buffers', () {
-    // 2 pixels: red (255, 0, 0) and green (0, 255, 0)
     final rgbBytes = Uint8List.fromList([255, 0, 0, 0, 255, 0]);
     final rgbFeatures = extractor.extractFromBytes(rgbBytes, bytesPerPixel: 3);
     expect(rgbFeatures.brightness, greaterThan(0));
     expect(rgbFeatures.saturation, greaterThan(0));
 
-    // RGBA: 2 pixels with alpha channel 255
     final rgbaBytes = Uint8List.fromList([255, 0, 0, 255, 0, 255, 0, 255]);
     final rgbaFeatures =
         extractor.extractFromBytes(rgbaBytes, bytesPerPixel: 4);
     expect(rgbaFeatures.brightness, closeTo(rgbFeatures.brightness, 1e-9));
 
-    // Invalid arguments
     expect(
       () => extractor.extractFromBytes(rgbBytes, bytesPerPixel: 2),
       throwsArgumentError,
@@ -149,6 +146,88 @@ void main() {
     }
   });
 
+  test('generateFromBytes creates card directly from pixel bytes', () {
+    final rgbBytes = Uint8List.fromList([255, 255, 255, 255, 255, 255]);
+    final card = generator.generateFromBytes(
+      id: 'bright-card',
+      ownerId: 'alchemist-1',
+      bytes: rgbBytes,
+      rarity: CardRarity.rare,
+    );
+    expect(card.id, 'bright-card');
+    expect(card.ownerId, 'alchemist-1');
+    expect(card.type, CardType.attack);
+    expect(card.rarity, CardRarity.rare);
+    expect(card.stats.strength, greaterThanOrEqualTo(5));
+  });
+
+  test('CardStats JSON serialization, validation, and equality', () {
+    const stats = CardStats(strength: 7);
+    final json = stats.toJson();
+    expect(json, {'strength': 7});
+
+    final restored = CardStats.fromJson(json);
+    expect(restored, equals(stats));
+    expect(restored.hashCode, equals(stats.hashCode));
+    expect(restored.toString(), contains('strength: 7'));
+
+    expect(() => CardStats.fromJson({'strength': 'not-int'}),
+        throwsFormatException);
+    expect(() => CardStats.fromJson({'strength': 0}), throwsRangeError);
+    expect(() => CardStats.fromJson({'strength': 11}), throwsRangeError);
+  });
+
+  test('GameCard JSON serialization and copyWith', () {
+    final card = GameCard(
+      id: 'card-101',
+      ownerId: 'user-42',
+      type: CardType.stun,
+      rarity: CardRarity.epic,
+      stats: const CardStats(strength: 9),
+      generationVersion: 'color-v0',
+    );
+
+    final json = card.toJson();
+    final restored = GameCard.fromJson(json);
+
+    expect(restored, equals(card));
+    expect(restored.hashCode, equals(card.hashCode));
+    expect(restored.toString(), contains('card-101'));
+
+    final modified = card.copyWith(
+      ownerId: 'user-99',
+      stats: const CardStats(strength: 5),
+    );
+    expect(modified.ownerId, 'user-99');
+    expect(modified.stats.strength, 5);
+    expect(modified.type, CardType.stun);
+    expect(modified.id, card.id);
+  });
+
+  test('GameCard.fromJson rejects malformed and tampered inputs', () {
+    final validJson = {
+      'id': 'c1',
+      'ownerId': 'u1',
+      'type': 'attack',
+      'rarity': 'common',
+      'stats': {'strength': 5},
+      'generationVersion': 'color-v0',
+    };
+
+    expect(
+      () => GameCard.fromJson({...validJson, 'type': 'super_weapon'}),
+      throwsFormatException,
+    );
+    expect(
+      () => GameCard.fromJson({...validJson, 'rarity': 'mythic_god'}),
+      throwsFormatException,
+    );
+    expect(
+      () => GameCard.fromJson({...validJson, 'id': 12345}),
+      throwsFormatException,
+    );
+  });
+
   test('overlapping photo features have deterministic priority', () {
     final card = generator.generate(
       id: 'overlap',
@@ -178,15 +257,24 @@ void main() {
   });
 
   test('invalid card metadata and stats fail', () {
-    expect(() => CardStats(strength: 0), throwsRangeError);
-    expect(() => CardStats(strength: 11), throwsRangeError);
     expect(
       () => GameCard(
         id: ' ',
         ownerId: 'user',
         type: CardType.attack,
         rarity: CardRarity.common,
-        stats: CardStats(strength: 2),
+        stats: const CardStats(strength: 2),
+        generationVersion: 'color-v0',
+      ),
+      throwsArgumentError,
+    );
+    expect(
+      () => GameCard(
+        id: 'a' * 129,
+        ownerId: 'user',
+        type: CardType.attack,
+        rarity: CardRarity.common,
+        stats: const CardStats(strength: 2),
         generationVersion: 'color-v0',
       ),
       throwsArgumentError,
