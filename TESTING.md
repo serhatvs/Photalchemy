@@ -12,7 +12,7 @@
 | Widget | Auth error states, camera permission-denied screen, inventory/empty states, battle controls and accessibility | Ali |
 | Service / repository | Mock Firebase repositories, offline retries, auth failures, invalid card writes, persisted inventory isolation | Şükrü |
 | Firebase rules | Authenticated owner allowed; unauthenticated and cross-user reads/writes rejected; invalid writes blocked | Şükrü |
-| Track A evaluation | Baseline, grouped train/test isolation, macro-F1/confusion matrix where applicable, confidence intervals and model card | Serhat |
+| Track A evaluation | Simulated-match data, held-out opponent win rate vs random/heuristic, match-grouped validation, 95% intervals and trained-policy model card | Serhat |
 | Track B evaluation | At least 20 fixed scenarios with legal/illegal actions, malformed tool calls, timeouts, prompt injection and deterministic fallback | Kadir |
 | End-to-end | Sign in → choose/capture image → receive card → inspect collection → battle, including denial/offline paths | All |
 
@@ -44,7 +44,7 @@ To test Firestore rules, use the Firebase Emulator Suite and a dedicated securit
 - Firebase token expired, offline state, denied cross-user access, write conflicts or duplicate requests.
 - No location permission and no GPS/emulator signal; no upload without consent.
 - GenAI malformed JSON/tool args, prompt injection from an untrusted field, provider outage and timeout.
-- ML missing/ambiguous features, model mismatch, data leakage across photo/session/location groups.
+- Trained enemy sees no hidden information; bad/missing action scores; match-level leakage across simulations, seeds or opponent strategies.
 
 ## Evidence for P1/P2/P3
 
