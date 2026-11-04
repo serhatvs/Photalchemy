@@ -14,9 +14,44 @@ class PhotoFeatures {
     }
   }
 
+  factory PhotoFeatures.fromJson(Map<String, dynamic> json) {
+    final b = (json['brightness'] as num?)?.toDouble();
+    final s = (json['saturation'] as num?)?.toDouble();
+    final c = (json['contrast'] as num?)?.toDouble();
+
+    if (b == null || s == null || c == null) {
+      throw const FormatException('Missing required photo feature keys');
+    }
+    return PhotoFeatures(brightness: b, saturation: s, contrast: c);
+  }
+
   final double brightness;
   final double saturation;
   final double contrast;
+
+  Map<String, dynamic> toJson() => {
+        'brightness': brightness,
+        'saturation': saturation,
+        'contrast': contrast,
+      };
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is PhotoFeatures &&
+          runtimeType == other.runtimeType &&
+          brightness == other.brightness &&
+          saturation == other.saturation &&
+          contrast == other.contrast;
+
+  @override
+  int get hashCode => Object.hash(brightness, saturation, contrast);
+
+  @override
+  String toString() =>
+      'PhotoFeatures(brightness: ${brightness.toStringAsFixed(3)}, '
+      'saturation: ${saturation.toStringAsFixed(3)}, '
+      'contrast: ${contrast.toStringAsFixed(3)})';
 }
 
 /// An adapter will decode the encoded photo and compute color statistics.

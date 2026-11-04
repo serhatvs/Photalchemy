@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:photalchemy/features/cards/domain/card_generator.dart';
 import 'package:photalchemy/features/cards/domain/color_feature_extractor.dart';
@@ -48,6 +49,80 @@ void main() {
       () => PhotoFeatures(brightness: 0, saturation: 1.1, contrast: 0),
       throwsRangeError,
     );
+  });
+
+  test(
+      'large uniform pixel set does not trigger floating point NaN in contrast',
+      () {
+    // 500 identical pixels: variance is exactly 0.0, float drift must not yield NaN
+    final uniformPixels = List.generate(
+      500,
+      (_) => RgbPixel(red: 120, green: 120, blue: 120),
+    );
+    final features = extractor.extract(uniformPixels);
+    expect(features.contrast, 0.0);
+    expect(features.contrast.isFinite, isTrue);
+  });
+
+  test('extractFromBytes extracts features from RGB and RGBA buffers', () {
+    // 2 pixels: red (255, 0, 0) and green (0, 255, 0)
+    final rgbBytes = Uint8List.fromList([255, 0, 0, 0, 255, 0]);
+    final rgbFeatures = extractor.extractFromBytes(rgbBytes, bytesPerPixel: 3);
+    expect(rgbFeatures.brightness, greaterThan(0));
+    expect(rgbFeatures.saturation, greaterThan(0));
+
+    // RGBA: 2 pixels with alpha channel 255
+    final rgbaBytes = Uint8List.fromList([255, 0, 0, 255, 0, 255, 0, 255]);
+    final rgbaFeatures =
+        extractor.extractFromBytes(rgbaBytes, bytesPerPixel: 4);
+    expect(rgbaFeatures.brightness, closeTo(rgbFeatures.brightness, 1e-9));
+
+    // Invalid arguments
+    expect(
+      () => extractor.extractFromBytes(rgbBytes, bytesPerPixel: 2),
+      throwsArgumentError,
+    );
+    expect(
+      () => extractor.extractFromBytes(Uint8List(2), bytesPerPixel: 3),
+      throwsArgumentError,
+    );
+  });
+
+  test('PhotoFeatures JSON serialization and equality work as expected', () {
+    final original = PhotoFeatures(
+      brightness: 0.75,
+      saturation: 0.5,
+      contrast: 0.25,
+    );
+    final json = original.toJson();
+    final restored = PhotoFeatures.fromJson(json);
+
+    expect(restored, equals(original));
+    expect(restored.hashCode, equals(original.hashCode));
+
+    expect(
+      () => PhotoFeatures.fromJson({'brightness': 0.5}),
+      throwsFormatException,
+    );
+    expect(
+      () => PhotoFeatures.fromJson({
+        'brightness': -0.1,
+        'saturation': 0.5,
+        'contrast': 0.5,
+      }),
+      throwsRangeError,
+    );
+  });
+
+  test('RgbPixel value equality and formatting', () {
+    final p1 = RgbPixel(red: 10, green: 20, blue: 30);
+    final p2 = RgbPixel(red: 10, green: 20, blue: 30);
+    final p3 = RgbPixel(red: 10, green: 25, blue: 30);
+
+    expect(p1, equals(p2));
+    expect(p1.hashCode, equals(p2.hashCode));
+    expect(p1, isNot(equals(p3)));
+    expect(p1.toString(), contains('R: 10, G: 20, B: 30'));
   });
 
   test('color features produce each provisional card type', () {

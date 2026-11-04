@@ -1,6 +1,8 @@
 analyzer:
   errors:
     missing_required_param: error
+  exclude:
+    - build/**
 
 linter:
   rules:
