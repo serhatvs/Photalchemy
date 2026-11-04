@@ -270,18 +270,32 @@ class HeuristicEnemyPolicy implements EnemyPolicy {
 
     // 1. Check for lethal attack (deals >= effective player HP)
     final effectivePlayerHp = observation.playerHp + observation.playerShield;
-    final lethal = actions.where((a) =>
-        a.cardType == CardType.attack && a.strength >= effectivePlayerHp);
+    final lethal = actions
+        .where((a) =>
+            a.cardType == CardType.attack && a.strength >= effectivePlayerHp)
+        .toList();
     if (lethal.isNotEmpty) {
+      lethal.sort((a, b) {
+        final cmp = b.strength.compareTo(a.strength);
+        if (cmp != 0) return cmp;
+        return a.id.compareTo(b.id);
+      });
       return lethal.first.id;
     }
 
     // 2. If low HP (< 5), prioritize survival: shield/defense or stun opponent
-    if (observation.enemyHp < 5) {
-      final defense = actions.where(
-          (a) => a.cardType == CardType.defense || a.cardType == CardType.stun);
+    final effectiveEnemyHp = observation.enemyHp + observation.enemyShield;
+    if (effectiveEnemyHp < 5) {
+      final defense = actions
+          .where((a) =>
+              a.cardType == CardType.defense || a.cardType == CardType.stun)
+          .toList();
       if (defense.isNotEmpty) {
-        defense.toList().sort((a, b) => b.strength.compareTo(a.strength));
+        defense.sort((a, b) {
+          final cmp = b.strength.compareTo(a.strength);
+          if (cmp != 0) return cmp;
+          return a.id.compareTo(b.id);
+        });
         return defense.first.id;
       }
     }
