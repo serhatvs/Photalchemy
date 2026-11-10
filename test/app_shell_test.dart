@@ -24,9 +24,11 @@ void main() {
 
     await tester.tap(find.byIcon(Icons.person_outline));
     await tester.pumpAndSettle();
-    expect(
-      find.text('Firebase sign-in and account details will appear here.'),
-      findsOneWidget,
-    );
+
+    expect(find.text('Welcome to Photalchemy'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
+    expect(find.text('Sign in (Coming soon)'), findsOneWidget);
+    expect(find.text('Create account (Coming soon)'), findsOneWidget);
   });
 }

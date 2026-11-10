@@ -4,7 +4,7 @@
 
 Photalchemy is a **location-based, turn-based card game for mobile** where the places you visit and the photos you take shape your deck. The game combines real-world exploration, photo-based card generation, and strategic dungeon battles.
 
-> **Project status:** Early planning / pre-development. The mechanics described below are the current design direction, not a list of completed features.
+> **Project status:** Initial Flutter application shell implemented. Navigation, placeholder screens, shared UI state components and widget tests are in place. The complete game, Firebase integration, photo-analysis model and battle system are still under development.
 
 ## The Story
 
@@ -68,7 +68,7 @@ The syllabus requires **both AI tracks in depth for a four-person team**. P1, P2
 
 ## Development Roadmap
 
-Dates follow the COMP205 Fall 2026 syllabus. Tasks are planned, not yet completed.
+Dates follow the COMP205 Fall 2026 syllabus. Checklist items track individual deliverables and should only be marked complete after implementation and verification.
 
 ### P1 — App Skeleton, Backend and CI (13 November 2026)
 
@@ -112,23 +112,74 @@ Development uses **short-lived feature branches**, GitHub Issues and reviewed pu
 - [AI Decision Record guidance](docs/adr/README.md)
 - [Track A model workspace](ml/README.md) and [Track B evaluation workspace](evaluation/README.md)
 
-The repository includes placeholder folders for the planned Flutter modules, but **the Flutter application itself has not been initialized yet**. Code owners are listed in [`.github/CODEOWNERS`](.github/CODEOWNERS); their review requests require appropriate GitHub repository access.
+The Flutter application has been initialized with Android platform files, navigation, placeholder feature screens and widget tests. The application is still a development shell; backend and gameplay integrations remain in progress. Code owners are listed in [`.github/CODEOWNERS`](.github/CODEOWNERS); their review requests require appropriate GitHub repository access.
+
 
 ## Getting Started
 
-Photalchemy's **initial Flutter UI shell** provides placeholder screens and navigation only. It is **not a complete playable game** and currently has no Firebase, camera, trained model or battle implementation.
+Photalchemy's initial Flutter application shell provides navigation and placeholder screens for account management, exploration, card collection and battles.
 
-The first Flutter setup PR adds the Dart source and tests. Standard Android platform files must still be generated with the official Flutter CLI before running or building on Android:
+The current application is a UI prototype, not a complete playable game. Firebase authentication, camera integration, trained photo-analysis models and battle logic are still under development.
+
+### Requirements
+
+- Flutter SDK (3.8.0 or later)
+- Dart SDK (included with Flutter)
+- Android Studio or another supported Android development environment
+- Android emulator or physical Android device
+
+### Setup
+
+Clone the repository and enter the project directory:
 
 ```bash
-flutter create --project-name photalchemy --platforms=android .
+git clone https://github.com/serhatvs/Photalchemy.git
+cd Photalchemy
+```
+
+Install dependencies:
+
+```bash
 flutter pub get
-flutter analyze
-flutter test
+```
+
+### Run the application
+
+Start an Android emulator or connect an Android device, then run:
+
+```bash
 flutter run
 ```
 
-After generating the platform files, commit their required non-secret contents through a reviewed PR. Do not commit Android signing keys or local configuration files. See [Issue #3](https://github.com/serhatvs/Photalchemy/issues/3) for remaining Flutter bootstrap work.
+### Verify the project
+
+Format the source code:
+
+```bash
+dart format lib test
+```
+
+Run static analysis:
+
+```bash
+flutter analyze
+```
+
+Run automated tests:
+
+```bash
+flutter test
+```
+
+The project currently includes widget tests for application navigation and shared empty, loading and error state components.
+
+### Development notes
+
+- Android platform files are included in the repository.
+- Do not commit Firebase credentials, Android signing keys or other secrets.
+- Backend, photo-analysis and gameplay integrations are being developed separately.
+- See [Issue #3](https://github.com/serhatvs/Photalchemy/issues/3) for the P1 Flutter bootstrap work.
+
 
 ## Team and Responsibilities
 
