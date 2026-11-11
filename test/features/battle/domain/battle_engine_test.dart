@@ -174,9 +174,9 @@ void main() {
   });
 
   test('HP tie-break correctly determines winner on max turns reached', () {
-    final playerHighHp =
+    const playerHighHp =
         BattleCombatant(hp: 9, maxHp: 10, shield: 0, isStunned: false);
-    final enemyLowHp =
+    const enemyLowHp =
         BattleCombatant(hp: 4, maxHp: 10, shield: 0, isStunned: false);
     final finishedState = BattleState(
       turnNumber: 51,
