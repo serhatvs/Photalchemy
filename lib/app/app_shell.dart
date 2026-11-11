@@ -15,6 +15,7 @@ import 'package:photalchemy/features/cards/domain/card_repository.dart';
 import 'package:photalchemy/features/cards/domain/game_card.dart';
 import 'package:photalchemy/features/cards/domain/photo_analysis.dart';
 import 'package:photalchemy/features/collection/presentation/collection_page.dart';
+import 'package:photalchemy/features/exploration/domain/rarity_policy.dart';
 import 'package:photalchemy/features/exploration/presentation/explore_page.dart';
 
 class AppShell extends StatefulWidget {
@@ -77,6 +78,8 @@ class _AppShellState extends State<AppShell> {
 
   static const _battleEngine = BattleEngine();
   static const _enemyPolicy = HeuristicEnemyPolicy();
+  static const _rarityPolicy = RarityPolicy();
+  static final _demoCell = CoarseLocation.fromCoordinates(38.7205, 35.4826);
 
   final List<LegalEnemyAction> _playerActions = [
     LegalEnemyAction(
@@ -159,15 +162,34 @@ class _AppShellState extends State<AppShell> {
     );
     final cardId = 'card-${_collection.length + 1}';
     final ownerId = _isAuthenticated ? (_userId ?? 'player') : 'guest';
+
+    Map<String, int> cellCounts = const {};
+    if (_isAuthenticated && _userId != null) {
+      final profile = await _profileRepository.getProfile(userId: _userId!);
+      cellCounts = profile?.cellCaptureCounts ?? const {};
+    }
+
+    final rarity = _rarityPolicy.determineRarity(
+      features: features,
+      permission: LocationPermission.granted,
+      location: _demoCell,
+      cellCaptureCounts: cellCounts,
+      random: random,
+    );
+
     final card = generator.generate(
       id: cardId,
       ownerId: ownerId,
       features: features,
-      rarity: CardRarity.values[random.nextInt(CardRarity.values.length)],
+      rarity: rarity,
     );
 
     if (_isAuthenticated && _userId != null) {
       await _cardRepository.saveCard(userId: _userId!, card: card);
+      await _profileRepository.incrementCellCapture(
+        userId: _userId!,
+        cellKey: _demoCell.cellKey,
+      );
     }
 
     setState(() {

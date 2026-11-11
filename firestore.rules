@@ -62,10 +62,11 @@ service cloud.firestore {
       allow create, update: if isOwner(userId) && isValidProfilePayload(userId);
       allow delete: if isOwner(userId);
 
-      // Per-user cards subcollection: strict owner-only access + schema validation
+      // Per-user cards subcollection: strict owner-only access + immutable grant schema
       match /cards/{cardId} {
         allow read: if isOwner(userId);
-        allow create, update: if isOwner(userId) && isValidCardPayload(userId, cardId);
+        allow create: if isOwner(userId) && isValidCardPayload(userId, cardId);
+        allow update: if false;
         allow delete: if isOwner(userId);
       }
     }

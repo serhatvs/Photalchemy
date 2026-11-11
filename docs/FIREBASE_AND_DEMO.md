@@ -34,7 +34,7 @@ All Firestore paths are **default-deny**. Only two user-scoped paths are permitt
 | Path | Purpose | Enforced Schema Invariants |
 | --- | --- | --- |
 | `/users/{userId}` | [`UserProfile`](../lib/features/auth/domain/profile_repository.dart) | `id == userId`, `isAnonymous is bool`, `notificationsEnabled is bool`, `cellCaptureCounts is map` (coarse `~1.1 km` grid counts only; no raw GPS coordinates). |
-| `/users/{userId}/cards/{cardId}` | [`GameCard`](../lib/features/cards/domain/game_card.dart) | `id == cardId`, `ownerId == userId`, `type in ['attack','defense','stun','reflect']`, `rarity in ['common','uncommon','rare','epic']`, `stats.strength` integer in `1..10`, `generationVersion is string`. |
+| `/users/{userId}/cards/{cardId}` | [`GameCard`](../lib/features/cards/domain/game_card.dart) | `id == cardId`, `ownerId == userId`, `type in ['attack','defense','stun','reflect']`, `rarity in ['common','uncommon','rare','epic']`, `stats.strength` integer in `1..10`, `generationVersion is string`; **cards are immutable once minted (`allow update: if false`)** to prevent post-mint rarity or strength escalation. |
 
 ### Negative Security Tests
 Automated unit tests in [`profile_repository_test.dart`](../test/features/auth/domain/profile_repository_test.dart) and [`firestore_card_repository_test.dart`](../test/features/cards/data/firestore_card_repository_test.dart) verify:

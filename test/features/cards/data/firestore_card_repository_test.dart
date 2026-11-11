@@ -97,6 +97,22 @@ void main() {
       );
     });
 
+    test(
+        'firestore.rules denies mutating existing cards to prevent rarity/strength escalation',
+        () async {
+      await repository.saveCard(userId: 'user_alice', card: aliceCard);
+
+      final forgedUpgrade = aliceCard.copyWith(
+        rarity: CardRarity.epic,
+        stats: const CardStats(strength: 10),
+      );
+
+      expect(
+        () => repository.saveCard(userId: 'user_alice', card: forgedUpgrade),
+        throwsA(isA<CardRepositoryException>()),
+      );
+    });
+
     test('surfaces offline unavailable state as CardRepositoryException',
         () async {
       gateway.simulateOffline = true;

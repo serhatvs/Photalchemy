@@ -138,6 +138,13 @@ class RuleEnforcingInMemoryFirestoreGateway implements FirestoreGateway {
           'Cross-user card write denied by firestore.rules.',
         );
       }
+      final normalized = segments.join('/');
+      if (_documents.containsKey(normalized)) {
+        throw const FirestoreSecurityException(
+          'permission-denied',
+          'Card updates are denied by firestore.rules (cards are immutable once minted).',
+        );
+      }
       if (!_isValidCardPayload(userId, cardId, data)) {
         throw const FirestoreSecurityException(
           'permission-denied',
