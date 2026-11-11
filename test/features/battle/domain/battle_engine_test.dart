@@ -51,7 +51,6 @@ void main() {
       enemyAction: null,
     );
 
-    // 4 absorbed by shield, 2 dealt to HP (10 - 2 = 8)
     expect(next.enemy.shield, 0);
     expect(next.enemy.hp, 8);
     expect(next.turnNumber, 2);
@@ -90,7 +89,6 @@ void main() {
       enemyAction: enemyAttack,
     );
 
-    // Player reflected enemy attack: player took 0, enemy took 5!
     expect(next.player.hp, 10);
     expect(next.enemy.hp, 5);
   });
@@ -106,7 +104,6 @@ void main() {
       enemyAction: enemyReflect,
     );
 
-    // Both reflect: no infinite bouncing, 0 damage to both
     expect(next.player.hp, 10);
     expect(next.enemy.hp, 10);
   });
@@ -122,8 +119,6 @@ void main() {
       enemyAction: enemyAttack,
     );
 
-    // Player gained 4 shield, enemy dealt 5 damage:
-    // 4 absorbed by shield, 1 dealt to HP (10 - 1 = 9)
     expect(next.player.shield, 0);
     expect(next.player.hp, 9);
   });
@@ -133,7 +128,6 @@ void main() {
     final playerStun = action('shock', CardType.stun, 3);
     final enemyAttack = action('slam', CardType.attack, 3);
 
-    // Turn 1: Player stuns enemy
     final turn2 = engine.resolveTurn(
       state: state,
       playerAction: playerStun,
@@ -141,7 +135,6 @@ void main() {
     );
     expect(turn2.enemy.isStunned, isTrue);
 
-    // Turn 2: Enemy is stunned and cannot act
     final enemyAttemptedMove = action('attempt', CardType.attack, 4);
     final playerRegular = action('poke', CardType.attack, 2);
 
@@ -151,10 +144,8 @@ void main() {
       enemyAction: enemyAttemptedMove,
     );
 
-    // Enemy was stunned on turn 2, so took damage from player but dealt 0 damage
-    expect(turn3.player.hp, 7); // took 3 on turn 1, 0 on turn 2
-    expect(turn3.enemy.hp, 8); // took 0 on turn 1, 2 on turn 2
-    // Stun has expired for turn 3!
+    expect(turn3.player.hp, 7);
+    expect(turn3.enemy.hp, 8);
     expect(turn3.enemy.isStunned, isFalse);
   });
 
@@ -180,5 +171,38 @@ void main() {
     expect(finalState.isGameOver, isTrue);
     expect(finalState.winner, isNotNull);
     expect(finalState.history, isNotEmpty);
+  });
+
+  test('HP tie-break correctly determines winner on max turns reached', () {
+    const playerHighHp =
+        BattleCombatant(hp: 9, maxHp: 10, shield: 0, isStunned: false);
+    const enemyLowHp =
+        BattleCombatant(hp: 4, maxHp: 10, shield: 0, isStunned: false);
+    final finishedState = BattleState(
+      turnNumber: 51,
+      player: playerHighHp,
+      enemy: enemyLowHp,
+    );
+
+    expect(finishedState.isGameOver, isTrue);
+    expect(finishedState.winner, CombatantSide.player);
+  });
+
+  test('negative damage protection clamps lethal incoming attack to zero HP',
+      () {
+    final state = createState(playerHp: 2, playerShield: 2);
+    final lethalHit = action('massive-hit', CardType.attack, 10);
+
+    final next = engine.resolveTurn(
+      state: state,
+      playerAction: null,
+      enemyAction: lethalHit,
+    );
+
+    expect(next.player.shield, 0);
+    expect(next.player.hp, 0);
+    expect(next.player.isDefeated, isTrue);
+    expect(next.isGameOver, isTrue);
+    expect(next.winner, CombatantSide.enemy);
   });
 }
