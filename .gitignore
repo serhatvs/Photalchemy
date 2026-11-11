@@ -53,6 +53,11 @@ unlinked_spec.ds
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
+**/android/app/google-services.json
+**/ios/Runner/GoogleService-Info.plist
+.firebase/
+firebase-debug.log
+firestore-debug.log
 *.jks
 
 # iOS/XCode related

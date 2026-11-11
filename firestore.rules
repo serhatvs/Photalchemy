@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions for authentication and ownership
+    function isSignedIn() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidCardType(cardType) {
+      return cardType in ['attack', 'defense', 'stun', 'reflect'];
+    }
+
+    function isValidRarity(rarity) {
+      return rarity in ['common', 'uncommon', 'rare', 'epic'];
+    }
+
+    function isValidCardPayload(userId, cardId) {
+      let data = request.resource.data;
+      return data.keys().hasAll([
+          'id',
+          'ownerId',
+          'type',
+          'rarity',
+          'stats',
+          'generationVersion'
+        ])
+        && data.id is string
+        && data.id == cardId
+        && data.ownerId is string
+        && data.ownerId == userId
+        && isValidCardType(data.type)
+        && isValidRarity(data.rarity)
+        && data.stats is map
+        && data.stats.strength is int
+        && data.stats.strength >= 1
+        && data.stats.strength <= 10
+        && data.generationVersion is string;
+    }
+
+    function isValidProfilePayload(userId) {
+      let data = request.resource.data;
+      return data.keys().hasAll([
+          'id',
+          'isAnonymous',
+          'notificationsEnabled',
+          'cellCaptureCounts'
+        ])
+        && data.id is string
+        && data.id == userId
+        && data.isAnonymous is bool
+        && data.notificationsEnabled is bool
+        && data.cellCaptureCounts is map;
+    }
+
+    // Per-user profile document: strict owner-only access
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidProfilePayload(userId);
+      allow delete: if isOwner(userId);
+
+      // Per-user cards subcollection: strict owner-only access + immutable grant schema
+      match /cards/{cardId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidCardPayload(userId, cardId);
+        allow update: if false;
+        allow delete: if isOwner(userId);
+      }
+    }
+
+    // Default deny for all other paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

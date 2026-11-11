@@ -72,12 +72,12 @@ Dates follow the COMP205 Fall 2026 syllabus. Tasks are planned, not yet complete
 
 ### P1 — App Skeleton, Backend and CI (13 November 2026)
 
-- [ ] Agree on gameplay rules and interfaces between modules.
-- [ ] Create Flutter screens, routes and mock card/battle data (Ali).
-- [ ] Set up Firebase Authentication, Firestore models/security rules and notification scaffolding (Şükrü).
-- [ ] Prototype deterministic photo features, define enemy-policy observation schema and synthetic battle dataset/evaluation protocol (Serhat + Kadir).
-- [ ] Implement a testable turn-based battle-state skeleton and mock enemy actions (Kadir).
-- [ ] Configure CI, automated tests, repository documentation and P1 ADRs (Serhat + Şükrü, with contributions from everyone).
+- [x] Agree on gameplay rules and interfaces between modules.
+- [x] Create Flutter screens, routes and mock card/battle data (Ali).
+- [x] Set up Firebase Authentication, Firestore models/security rules and notification scaffolding (Şükrü).
+- [x] Prototype deterministic photo features, define enemy-policy observation schema and synthetic battle dataset/evaluation protocol (Serhat + Kadir).
+- [x] Implement a testable turn-based battle-state skeleton and mock enemy actions (Kadir).
+- [x] Configure CI, automated tests, repository documentation and P1 ADRs (Serhat + Şükrü, with contributions from everyone).
 
 ### P2 — AI Implementation Progress (25 December 2026)
 
@@ -108,29 +108,28 @@ Development uses **short-lived feature branches**, GitHub Issues and reviewed pu
 - [Data minimization and privacy design](PRIVACY.md)
 - [Team working agreement and responsibilities](TEAM.md)
 - [Proposed module structure and data flow](docs/ARCHITECTURE.md)
+- [Firebase foundation, security rules and P1 emulator demo walkthrough](docs/FIREBASE_AND_DEMO.md)
 - [Card-domain contract proposal](docs/CARD_CONTRACT.md)
 - [Track A training and evaluation plan](ml/TRACK_A_PLAN.md)
 - [AI coding assistant instructions](AGENTS.md)
 - [AI Decision Record guidance](docs/adr/README.md)
 - [Track A model workspace](ml/README.md) and [Track B evaluation workspace](evaluation/README.md)
 
-The repository includes placeholder folders for the planned Flutter modules, but **the Flutter application itself has not been initialized yet**. Code owners are listed in [`.github/CODEOWNERS`](.github/CODEOWNERS); their review requests require appropriate GitHub repository access.
+Code owners are listed in [`.github/CODEOWNERS`](.github/CODEOWNERS); their review requests require appropriate GitHub repository access.
 
 ## Getting Started
 
-Photalchemy's **initial Flutter UI shell** provides placeholder screens and navigation only. It is **not a complete playable game** and currently has no Firebase, camera, trained model or battle implementation.
+Photalchemy's **P1 Flutter application** provides the 4-tab navigation shell (`Explore`, `Cards`, `Battle`, `Account`), deterministic color-to-card generation, simultaneous turn-based combat engine, rule-enforced Firestore profile/card repositories, and FCM notification opt-in scaffolding. See [`docs/FIREBASE_AND_DEMO.md`](docs/FIREBASE_AND_DEMO.md) for the step-by-step **P1 Emulator Demo Walkthrough**.
 
-The first Flutter setup PR adds the Dart source and tests. Standard Android platform files must still be generated with the official Flutter CLI before running or building on Android:
+Run locally on an Android emulator:
 
 ```bash
-flutter create --project-name photalchemy --platforms=android .
 flutter pub get
+dart format --output=none --set-exit-if-changed lib test integration_test
 flutter analyze
 flutter test
 flutter run
 ```
-
-After generating the platform files, commit their required non-secret contents through a reviewed PR. Do not commit Android signing keys or local configuration files. See [Issue #3](https://github.com/serhatvs/Photalchemy/issues/3) for remaining Flutter bootstrap work.
 
 ## Team and Responsibilities
 
