@@ -1,38 +1,32 @@
-# ADR: SafeFallbackPolicy Wrapper and Runtime Action Whitelisting for Track A & B
-- Milestone: P1
-- Date: 2026-11-04
-- Author: Serhat
-- Related issue / PR / commit: PR #11 (commits `1fe06a3`, `04673ab`)
+# ADR-003: SafeFallbackPolicy Wrapper and Runtime Action Whitelisting for Track A & B
 
-## Goal and prompt
-Design the opponent policy contract and execution boundary for Track A (supervised/RL policy) and Track B (LLM tool-calling agent) that:
-1. Prevents untrusted AI outputs, prompt injections, or malformed JSON from altering game rules or game state.
-2. Prevents application freezing or deadlocks when external LLM APIs experience high latency or timeouts.
-3. Automatically falls back to a competitive deterministic baseline if the primary policy fails.
+**Date:** 2026-11-04  **Author:** Serhat Yavuz  **Milestone:** P1  
+**Tool and model used:** AI coding assistant (sanitized security/contract prompt; human-verified implementation in PR #11 / commit `16d8948`)
 
-Prompt to AI:
-> "We need an architecture for the opponent policy that accommodates both an offline trained model (Track A) and an LLM tool-calling agent (Track B). The game engine must be authoritative. Untrusted model decisions must be validated against legal moves, timed out if slow, and cleanly intercepted without crashing."
+## Context
+Photalchemy requires both an own-trained competitive policy (Track A) and a generative tool-calling LLM opponent (Track B). Untrusted LLM outputs, prompt injections embedded in card/player metadata, or network timeouts must never freeze the UI, leak hidden player cards, or allow illegal HP/state mutations.
 
-## Accepted suggestion and resulting change
-Created the `EnemyPolicy` contract and `SafeFallbackEnemyPolicy` in `lib/features/battle/domain/enemy_policy.dart`:
-- `EnemyObservation` only exposes public combatant information (HP, shield, stun state, legal actions). No hidden decks, credentials, or private photos.
-- `validateEnemyAction` enforces strict action ID whitelisting before any move is submitted to the engine.
-- `SafeFallbackEnemyPolicy` wraps any primary policy with:
-  1. A configurable timeout (default 1500 ms).
-  2. Exception and malformed proposal handling.
-  3. Automatic fallback to `HeuristicEnemyPolicy`.
-  4. Observability via `fallbackActivations` counter for evaluation auditing.
+## Prompt
+```
+We need an architecture for the opponent policy that accommodates both an offline
+trained model (Track A) and an LLM tool-calling agent (Track B). The game engine
+must be authoritative. Untrusted model decisions must be validated against legal
+moves, timed out if slow, and cleanly intercepted without crashing.
+```
 
-## Rejected AI suggestion
-The AI suggested giving the LLM tool-calling agent direct executable tool definitions that manipulate engine state (e.g., `tool_call: reduce_player_hp(amount)` or `tool_call: grant_enemy_shield(amount)`).
+## Result
+Implemented `EnemyObservation`, `LegalEnemyAction`, `validateEnemyAction`, and `SafeFallbackEnemyPolicy` in `lib/features/battle/domain/enemy_policy.dart`, plus 20 predefined evaluation cases in `lib/features/battle/domain/battle_scenario.dart` (landed via PR #11, commit `16d8948`, and wired into `AppController`):
+- `EnemyObservation` exposes only public battle state (HP, shields, turn number, stun flags, legal action IDs) — no hidden hand, deck order, photos, or credentials.
+- `validateEnemyAction` strictly whitelists proposed IDs against `observation.legalActions`.
+- `SafeFallbackEnemyPolicy` enforces a configurable timeout (`1500 ms` default), catches exceptions/hallucinated IDs, increments `fallbackActivations`, and falls back deterministically to `HeuristicEnemyPolicy`.
 
-**Why rejected:**
-1. **Security & Prompt Injection Risk:** If the opponent is an LLM with direct state manipulation tools, an adversarial prompt inside a card description or user name could instruct the model to call `reduce_player_hp(999)`, completely bypassing combat logic.
-2. **Asymmetry:** Track A (tabular/neural network model) produces action classifications, not arbitrary function calls. Having Track B manipulate game state directly breaks the unified interface between Track A and Track B.
-3. **Engine Authority Violation:** The game engine must remain the single source of truth for all game mechanics.
+## Rejected suggestion(s) — at least one
+The AI initially suggested giving the Track B LLM direct state-mutating tool definitions such as `reduce_player_hp(amount)` or `grant_enemy_shield(amount)`.
+**Rejected because:** (1) direct state-mutation tools create a critical prompt-injection vulnerability (adversarial text could trigger `reduce_player_hp(999)`), (2) Track A outputs discrete action rankings rather than arbitrary mutations, and (3) the deterministic `BattleEngine` must remain the sole authority over combat state.
 
 ## Verification
-- Verified via `test/features/battle/domain/battle_scenario_test.dart` and `test/features/battle/domain/enemy_policy_test.dart`:
-  - 20 Track B evaluation scenarios benchmarked with `EvaluationRunner`.
-  - Intentionally hanging policy triggered the 10ms timeout fallback.
-  - Hallucinated card ID was rejected by `validateEnemyAction` and triggered fallback with zero crashes.
+- `flutter test test/features/battle/domain/enemy_policy_test.dart`: verified hanging policies trigger the timeout fallback and hallucinated/injected action IDs are rejected safely.
+- `flutter test test/features/battle/domain/battle_scenario_test.dart`: verified all 20 Track B scenarios run through `EvaluationRunner` with 100% legal-action compliance.
+
+## What I learned
+Treating AI opponents strictly as untrusted action proposers behind a deterministic validator unifies Track A and Track B while neutralizing prompt-injection and latency risks.

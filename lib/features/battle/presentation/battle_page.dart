@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:photalchemy/features/battle/domain/battle_engine.dart';
 import 'package:photalchemy/features/battle/domain/enemy_policy.dart';
 import 'package:photalchemy/features/cards/domain/game_card.dart';
 
@@ -8,25 +9,50 @@ class BattlePage extends StatelessWidget {
     this.enemyHp = 10,
     this.maxEnemyHp = 10,
     this.enemyShield = 0,
+    this.isEnemyStunned = false,
     this.playerHp = 10,
     this.maxPlayerHp = 10,
     this.playerShield = 0,
+    this.isPlayerStunned = false,
     this.turnNumber = 1,
     this.isResolvingTurn = false,
+    this.isGameOver = false,
+    this.winner,
+    this.lastTurnSummary,
     this.legalActions = const [],
     this.onActionSelected,
+    this.onResetBattle,
   });
 
   final int enemyHp;
   final int maxEnemyHp;
   final int enemyShield;
+  final bool isEnemyStunned;
   final int playerHp;
   final int maxPlayerHp;
   final int playerShield;
+  final bool isPlayerStunned;
   final int turnNumber;
   final bool isResolvingTurn;
+  final bool isGameOver;
+  final CombatantSide? winner;
+  final String? lastTurnSummary;
   final List<LegalEnemyAction> legalActions;
   final ValueChanged<LegalEnemyAction>? onActionSelected;
+  final VoidCallback? onResetBattle;
+
+  IconData _iconForType(CardType type) {
+    switch (type) {
+      case CardType.attack:
+        return Icons.flash_on;
+      case CardType.defense:
+        return Icons.shield;
+      case CardType.stun:
+        return Icons.bolt;
+      case CardType.reflect:
+        return Icons.cached;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +87,18 @@ class BattlePage extends StatelessWidget {
                           ),
                         ],
                       ),
-                      Text('Turn $turnNumber'),
+                      Row(
+                        children: [
+                          if (isEnemyStunned) ...[
+                            const Chip(
+                              label: Text('STUNNED'),
+                              visualDensity: VisualDensity.compact,
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          Text('Turn $turnNumber'),
+                        ],
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -82,7 +119,7 @@ class BattlePage extends StatelessWidget {
 
           const Spacer(),
 
-          // Turn resolution feedback or VS banner
+          // Turn resolution feedback, last turn log, or VS banner
           Center(
             child: isResolvingTurn
                 ? const Column(
@@ -93,12 +130,37 @@ class BattlePage extends StatelessWidget {
                       Text('Resolving combat turn...'),
                     ],
                   )
-                : Text(
-                    'VS',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: Theme.of(context).colorScheme.outline,
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isGameOver
+                            ? (winner == CombatantSide.player
+                                ? 'VICTORY'
+                                : winner == CombatantSide.enemy
+                                    ? 'DEFEAT'
+                                    : 'DRAW')
+                            : 'VS',
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                      ),
+                      if (lastTurnSummary != null) ...[
+                        const SizedBox(height: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text(
+                            lastTurnSummary!,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ),
+                      ],
+                    ],
                   ),
           ),
 
@@ -112,14 +174,24 @@ class BattlePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Icon(Icons.person, color: Colors.blue),
-                      SizedBox(width: 8),
-                      Text(
-                        'Player',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      const Row(
+                        children: [
+                          Icon(Icons.person, color: Colors.blue),
+                          SizedBox(width: 8),
+                          Text(
+                            'Player',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
+                      if (isPlayerStunned)
+                        const Chip(
+                          label: Text('STUNNED'),
+                          visualDensity: VisualDensity.compact,
+                        ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -140,8 +212,16 @@ class BattlePage extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // Action buttons / Hand
-          if (legalActions.isEmpty)
+          // Action buttons / Hand / Reset
+          if (isGameOver && onResetBattle != null)
+            Center(
+              child: FilledButton.icon(
+                onPressed: onResetBattle,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Play Again'),
+              ),
+            )
+          else if (legalActions.isEmpty)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -164,12 +244,7 @@ class BattlePage extends StatelessWidget {
               alignment: WrapAlignment.center,
               children: legalActions.map((action) {
                 return ActionChip(
-                  avatar: Icon(
-                    action.cardType == CardType.attack
-                        ? Icons.flash_on
-                        : Icons.shield,
-                    size: 16,
-                  ),
+                  avatar: Icon(_iconForType(action.cardType), size: 16),
                   label: Text('${action.id} (${action.strength})'),
                   onPressed: isResolvingTurn
                       ? null

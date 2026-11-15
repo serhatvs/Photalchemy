@@ -13,24 +13,31 @@ The COMP205 syllabus requires **three genuine ADRs with each of P1, P2 and P3**.
 ## Milestone P3 Records
 *(Planned for P3 implementation)*
 
-## Template
+## Template (COMP 205 `ADR_TEMPLATE.md`)
 
 ```markdown
-# ADR: <short title>
-- Milestone: P1 / P2 / P3
-- Date:
-- Author:
-- Related issue / PR / commit:
+# ADR-NNN: <short title>
 
-## Goal and prompt
-<Sanitized prompt, relevant constraints and context>
+**Date:**  **Author:**  **Milestone:** P1 / P2 / P3
+**Tool and model used:** (e.g., OpenCode + Muse Spark 1.3)
 
-## Accepted suggestion and resulting change
-<What changed? Link to diff/commit and explain why it works>
+## Context
+What were you trying to do? What was the problem? (2–4 sentences)
 
-## Rejected AI suggestion
-<What was suggested, why it was rejected, and what was done instead>
+## Prompt
+```
+<the prompt you gave, shortened if long>
+```
+
+## Result
+What did the AI produce? Link to the commit or paste the key part of the diff.
+
+## Rejected suggestion(s) — at least one
+What did the AI suggest that you did NOT accept, and why?
 
 ## Verification
-<Tests run, manual checks, results and limitations>
+How did you check that the accepted code is correct? (tests, manual test, review)
+
+## What I learned
+One or two sentences.
 ```

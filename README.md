@@ -4,7 +4,7 @@
 
 Photalchemy is a **location-based, turn-based card game for mobile** where the places you visit and the photos you take shape your deck. The game combines real-world exploration, photo-based card generation, and strategic dungeon battles.
 
-> **Project status:** Early planning / pre-development. The mechanics described below are the current design direction, not a list of completed features.
+> **Project status (Team Lunerya — No. T13):** **P1 Skeleton implemented.** The navigable Flutter app (`Explore`, `Cards`, `Battle`, `Account`), `AppController` (`ChangeNotifier`) state management, deterministic color-to-card pipeline, turn-based `BattleEngine`, rule-enforced Firestore repositories, FCM notification opt-in scaffolding, unit/widget/integration tests, CI workflow, and P1 ADRs are in place. Live cloud credentials (`google-services.json`), camera hardware decoding, Track A model training, and Track B live LLM tool-calling are scheduled for P2/P3.
 
 ## The Story
 
@@ -119,7 +119,7 @@ Code owners are listed in [`.github/CODEOWNERS`](.github/CODEOWNERS); their revi
 
 ## Getting Started
 
-Photalchemy's **P1 Flutter application** provides the 4-tab navigation shell (`Explore`, `Cards`, `Battle`, `Account`), deterministic color-to-card generation, simultaneous turn-based combat engine, rule-enforced Firestore profile/card repositories, and FCM notification opt-in scaffolding. See [`docs/FIREBASE_AND_DEMO.md`](docs/FIREBASE_AND_DEMO.md) for the step-by-step **P1 Emulator Demo Walkthrough**.
+Photalchemy's **P1 Flutter application** provides the 4-tab navigation shell (`Explore`, `Cards`, `Battle`, `Account`), [`AppController`](lib/app/app_controller.dart) (`ChangeNotifier`) state management, deterministic color-to-card generation, simultaneous turn-based combat engine with [`SafeFallbackEnemyPolicy`](lib/features/battle/domain/enemy_policy.dart), rule-enforced Firestore profile/card repositories, and FCM notification opt-in scaffolding. See [`docs/FIREBASE_AND_DEMO.md`](docs/FIREBASE_AND_DEMO.md) for the step-by-step **P1 Emulator Demo Walkthrough** and [`docs/P1_REPORT.md`](docs/P1_REPORT.md) for the **Team Lunerya (T13) P1 Milestone Report**.
 
 Run locally on an Android emulator:
 
@@ -128,6 +128,7 @@ flutter pub get
 dart format --output=none --set-exit-if-changed lib test integration_test
 flutter analyze
 flutter test
+flutter test -d flutter-tester integration_test
 flutter run
 ```
 

@@ -47,3 +47,7 @@ jobs:
       - name: Run Flutter tests
         if: ${{ hashFiles('pubspec.yaml') != '' }}
         run: flutter test
+
+      - name: Run Flutter integration tests
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
+        run: flutter test -d flutter-tester integration_test

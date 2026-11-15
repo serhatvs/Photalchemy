@@ -1,36 +1,32 @@
-# ADR: Deterministic Pure-State Battle Engine and Cycle Prevention
-- Milestone: P1
-- Date: 2026-11-04
-- Author: Serhat
-- Related issue / PR / commit: PR #11 (commits `32f6db3`, `4c95fc8`)
+# ADR-002: Deterministic Pure-State Battle Engine and Cycle Prevention
 
-## Goal and prompt
-Design and implement the battle simulation engine for Photalchemy that:
-1. Executes turn-based combat with 4 elemental mechanics: damage, shield absorption, stun, and damage reflection.
-2. Resolves turns simultaneously so neither player nor AI holds an arbitrary first-mover advantage.
-3. Completely prevents infinite damage reflection loops when both sides play reflect cards.
-4. Generates identical, reproducible battle states for synthetic dataset training.
+**Date:** 2026-11-04  **Author:** Serhat Yavuz  **Milestone:** P1  
+**Tool and model used:** AI coding assistant (sanitized engine design prompt; human-verified implementation in PR #11 / commit `16d8948` & PR #15)
 
-Prompt to AI:
-> "Implement turn-based combat resolution for Photalchemy. The engine must support attacks, shields, stuns, and reflection. Ensure infinite reflection cycles are mathematically impossible, health values are clamped at zero, and matches terminate cleanly within 50 turns."
+## Context
+Photalchemy's dungeon combat supports four card archetypes (`attack`, `defense`, `stun`, `reflect`) used simultaneously by the player and an AI opponent. For both fair gameplay and generating clean synthetic match trajectories for Track A training, the combat engine needed to be deterministic, pure-state, immune to negative HP or infinite reflect loops, and guaranteed to terminate.
 
-## Accepted suggestion and resulting change
-Implemented `BattleEngine` in `lib/features/battle/domain/battle_engine.dart`:
-- Simultaneous round evaluation: Actions are submitted simultaneously and resolved across distinct phases (Status phase -> Shield phase -> Defense mitigation phase -> Reflection calculation -> Damage application).
-- Shield absorption prioritizes shield reduction before decreasing combatant HP.
-- Infinite reflection prevention: Reflected damage is calculated strictly once from base incoming damage without triggering recursive re-reflection counters.
-- Bounded match simulator: `simulateMatch` caps execution at `maxTurns: 50` to guarantee termination, returning an explicit `BattleResult` (`playerWon`, `enemyWon`, or `draw`).
+## Prompt
+```
+Implement turn-based combat resolution for Photalchemy. The engine must support
+attacks, shields, stuns, and reflection. Ensure infinite reflection cycles are
+mathematically impossible, health values are clamped at zero, and matches
+terminate cleanly within 50 turns.
+```
 
-## Rejected AI suggestion
-The AI proposed an asynchronous turn queue with initiative ordering where the fastest combatant executes their action, directly mutates opponent HP, and checks for death before the second combatant acts.
+## Result
+Implemented `BattleEngine`, `BattleState`, and `BattleCombatant` in `lib/features/battle/domain/battle_engine.dart` (landed via PR #11, squash commit `16d8948`, with boundary tests expanded in PR #15):
+- Resolves turns simultaneously across explicit pure phases (stun check → defense shield grant → reflect mitigation → shield-first damage absorption → HP clamp `[0, maxHp]` → stun state update).
+- Prevents infinite reflection loops by computing reflection strictly once from base incoming attack damage without recursive re-reflection.
+- Bounds matches at `maxAllowedTurns = 50` with an explicit HP tie-breaker returning `CombatantSide` (`player`, `enemy`, or `draw`).
 
-**Why rejected:**
-1. **First-mover Bias:** Sequential execution unfairly rewards the first mover, making sudden-death turns non-deterministic based solely on initiative tiebreaking.
-2. **State Race Conditions:** Sequential in-place mutation complicates undo, replay verification, and reactive Flutter widget rendering.
-3. **Dataset Noise:** Unpredictable initiative ordering introduces noisy target labels into synthetic datasets generated for Track A policy training.
+## Rejected suggestion(s) — at least one
+The AI initially proposed an asynchronous initiative-based turn queue where the faster combatant acts first, mutates opponent HP in place, and checks defeat before the second combatant acts.
+**Rejected because:** (1) sequential initiative introduces first-mover bias on sudden-death turns, (2) in-place mutation complicates state snapshots and reactive Flutter UI rendering, and (3) initiative tie-breaking noise corrupts Track A synthetic training targets.
 
 ## Verification
-- Verified via `test/features/battle/domain/battle_engine_test.dart` and `test/features/battle/domain/synthetic_match_generator_test.dart`:
-  - Verified mutual reflect cards resolve once without infinite recursion or stack overflows.
-  - Verified shield absorption absorbs partial and total attack values.
-  - Verified matches never exceed 50 turns and produce zero negative HP states.
+- `flutter test test/features/battle/domain/battle_engine_test.dart`: verified simultaneous resolution, shield absorption, stun turn skips and expiration, mutual reflect cancellation without recursion, max-turn HP tie-break, and lethal damage HP clamping at `0`.
+- `flutter test test/features/battle/domain/synthetic_match_generator_test.dart`: verified bounded match rollouts and deterministic seeds.
+
+## What I learned
+Pure, immutable state transitions with simultaneous turn phases make both UI testing and reproducible ML dataset generation dramatically simpler and bug-resistant.
