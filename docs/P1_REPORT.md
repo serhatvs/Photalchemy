@@ -104,7 +104,7 @@ All checks below were executed on the final P1 codebase (`feat/p1-completion-and
 | Unit & Widget Tests | `flutter test` | Passed — **91 / 91 tests passed** (domain, repositories, security rules, `AppController`, `AppShell`, `AsyncStateView`, `BattlePage`, `CollectionPage`, `ExplorePage`, `AccountPage`, 20 Track B scenarios, `SyntheticMatchDatasetGenerator`) |
 | Integration Test | `flutter test -d flutter-tester integration_test` | Passed — **1 / 1 end-to-end MVP test passed** (`Explore` capture → `Cards` → `Battle` turn → `Account` sign-in, FCM opt-in & demo alert → sign-out) |
 | Android APK Build | `flutter build apk --debug` | Passed — built `build\app\outputs\flutter-apk\app-debug.apk` (175,341,805 bytes) |
-| GitHub Actions CI | `.github/workflows/ci.yml` (`verify`) | Configured to enforce governance files, `flutter pub get`, `dart format`, `flutter analyze`, `flutter test`, and `flutter test -d flutter-tester integration_test` |
+| GitHub Actions CI | `.github/workflows/ci.yml` (`verify`) | Passed — PR #16 run `43705512127` completed `SUCCESS` on Ubuntu (`dart format`, `flutter analyze` on `3.47.8`, `flutter test`, `flutter test -d flutter-tester integration_test`) |
 
 ---
 
