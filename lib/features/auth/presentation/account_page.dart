@@ -6,22 +6,28 @@ class AccountPage extends StatelessWidget {
     this.isAuthenticated = false,
     this.userId,
     this.email,
+    this.notificationsEnabled = false,
     this.onSignIn,
     this.onSignOut,
+    this.onToggleNotifications,
+    this.onSendDemoNotification,
   });
 
   final bool isAuthenticated;
   final String? userId;
   final String? email;
+  final bool notificationsEnabled;
   final VoidCallback? onSignIn;
   final VoidCallback? onSignOut;
+  final ValueChanged<bool>? onToggleNotifications;
+  final VoidCallback? onSendDemoNotification;
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: Padding(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Card(
             child: Padding(
@@ -52,6 +58,27 @@ class AccountPage extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
+                  if (isAuthenticated && onToggleNotifications != null) ...[
+                    const Divider(height: 32),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Dungeon Alerts (FCM)'),
+                      subtitle: const Text(
+                        'Opt-in to receive exploration & encounter notifications.',
+                      ),
+                      value: notificationsEnabled,
+                      onChanged: onToggleNotifications,
+                    ),
+                    if (notificationsEnabled &&
+                        onSendDemoNotification != null) ...[
+                      const SizedBox(height: 8),
+                      FilledButton.tonalIcon(
+                        onPressed: onSendDemoNotification,
+                        icon: const Icon(Icons.notifications_active_outlined),
+                        label: const Text('Send Demo FCM Alert'),
+                      ),
+                    ],
+                  ],
                   const SizedBox(height: 24),
                   if (isAuthenticated)
                     OutlinedButton.icon(

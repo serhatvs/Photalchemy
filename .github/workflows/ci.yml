@@ -31,6 +31,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          flutter-version: '3.47.8'
 
       - name: Fetch Flutter packages
         if: ${{ hashFiles('pubspec.yaml') != '' }}
@@ -47,3 +48,7 @@ jobs:
       - name: Run Flutter tests
         if: ${{ hashFiles('pubspec.yaml') != '' }}
         run: flutter test
+
+      - name: Run Flutter integration tests
+        if: ${{ hashFiles('pubspec.yaml') != '' }}
+        run: flutter test -d flutter-tester integration_test

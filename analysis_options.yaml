@@ -3,6 +3,8 @@ analyzer:
     missing_required_param: error
   exclude:
     - build/**
+    - android/**
+    - web/**
 
 linter:
   rules:

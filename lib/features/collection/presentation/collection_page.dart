@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:photalchemy/core/widgets/async_state_view.dart';
 import 'package:photalchemy/features/cards/domain/game_card.dart';
 
 class CollectionPage extends StatelessWidget {
@@ -18,70 +19,24 @@ class CollectionPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Loading your cards...'),
-          ],
-        ),
-      );
+      return const LoadingStateView(message: 'Loading your cards...');
     }
 
     if (errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: Colors.red),
-              const SizedBox(height: 12),
-              Text(
-                errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red),
-              ),
-              const SizedBox(height: 16),
-              if (onRetry != null)
-                FilledButton.tonal(
-                  onPressed: onRetry,
-                  child: const Text('Try Again'),
-                ),
-            ],
-          ),
-        ),
+      return ErrorStateView(
+        message: errorMessage!,
+        onRetry: onRetry,
+        retryLabel: 'Try Again',
       );
     }
 
     final cardList = cards ?? const [];
     if (cardList.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.style_outlined,
-                size: 64,
-                color: Theme.of(context).colorScheme.outline,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No cards in collection yet',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Capture photos in Explore to extract colors and generate unique battle cards.',
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
+      return const EmptyStateView(
+        icon: Icons.style_outlined,
+        title: 'No cards in collection yet',
+        message:
+            'Capture photos in Explore to extract colors and generate unique battle cards.',
       );
     }
 

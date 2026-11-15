@@ -61,7 +61,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Turn 2'), findsOneWidget);
 
-      // 4. Sign in in Account tab
+      // 4. Sign in in Account tab and test FCM opt-in alert
       await tester.tap(find.byIcon(Icons.person_outline));
       await tester.pumpAndSettle();
       expect(find.text('Guest Alchemist'), findsOneWidget);
@@ -69,6 +69,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Alchemist Account'), findsOneWidget);
       expect(find.text('alchemist@photalchemy.io'), findsOneWidget);
+
+      // 5. Enable FCM Dungeon Alerts and trigger demo notification
+      expect(find.text('Dungeon Alerts (FCM)'), findsOneWidget);
+      await tester.ensureVisible(find.byType(Switch));
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+      final demoAlertButton = find.text('Send Demo FCM Alert');
+      expect(demoAlertButton, findsOneWidget);
+      await tester.ensureVisible(demoAlertButton);
+      await tester.pumpAndSettle();
+      await tester.tap(demoAlertButton);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('FCM [dungeon_alerts]:'), findsOneWidget);
     },
   );
 
@@ -185,6 +198,30 @@ void main() {
       );
       expect(find.text('Resolving combat turn...'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+
+    testWidgets('shows stun badges, turn summary and Play Again on game over',
+        (tester) async {
+      var resetCalled = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BattlePage(
+              enemyHp: 0,
+              isEnemyStunned: true,
+              isGameOver: true,
+              lastTurnSummary: 'Player dealt 4 damage.',
+              onResetBattle: () => resetCalled = true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('STUNNED'), findsOneWidget);
+      expect(find.text('Player dealt 4 damage.'), findsOneWidget);
+      expect(find.text('DRAW'), findsOneWidget);
+      await tester.tap(find.text('Play Again'));
+      expect(resetCalled, isTrue);
     });
   });
 
