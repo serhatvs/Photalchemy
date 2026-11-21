@@ -109,6 +109,7 @@ class AppController extends ChangeNotifier {
   String? _collectionErrorMessage;
   final List<GameCard> _collection = [starterCard];
   int _captureSceneIndex = 0;
+  int _mintCounter = 1;
 
   String? _authErrorMessage;
 
@@ -238,7 +239,11 @@ class AppController extends ChangeNotifier {
 
     final frameBytes = _nextSampleRgbFrame();
     final features = _colorExtractor.extractFromBytes(frameBytes);
-    final cardId = 'card-${_collection.length + 1}';
+    final existingIds = _collection.map((c) => c.id).toSet();
+    do {
+      _mintCounter += 1;
+    } while (existingIds.contains('card-$_mintCounter'));
+    final cardId = 'card-$_mintCounter';
     final ownerId = _isAuthenticated ? (_userId ?? 'player') : 'guest';
 
     Map<String, int> cellCounts = const {};
@@ -305,11 +310,18 @@ class AppController extends ChangeNotifier {
 
     try {
       final persisted = await _cardRepository.getCards(userId: _userId!);
-      if (persisted.isNotEmpty) {
-        _collection
-          ..clear()
-          ..addAll(persisted.reversed)
-          ..add(starterCard);
+      _collection
+        ..clear()
+        ..addAll(persisted.reversed)
+        ..add(starterCard);
+      for (final card in persisted) {
+        final match = RegExp(r'^card-(\d+)$').firstMatch(card.id);
+        if (match != null) {
+          final parsed = int.tryParse(match.group(1)!);
+          if (parsed != null && parsed > _mintCounter) {
+            _mintCounter = parsed;
+          }
+        }
       }
     } on CardRepositoryException catch (e) {
       _collectionErrorMessage = e.message;
@@ -423,6 +435,19 @@ class AppController extends ChangeNotifier {
       _userId = user.id;
       _userEmail = user.email;
       _notificationsEnabled = existingProfile?.notificationsEnabled ?? false;
+
+      if (_notificationsEnabled) {
+        try {
+          final status = await _notificationService.requestPermission();
+          if (status == NotificationPermissionStatus.granted) {
+            await _notificationService.subscribeToTopic('dungeon_alerts');
+          } else {
+            _notificationsEnabled = false;
+          }
+        } catch (_) {
+          _notificationsEnabled = false;
+        }
+      }
 
       await reloadCollection();
     } catch (e) {

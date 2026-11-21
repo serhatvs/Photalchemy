@@ -43,7 +43,7 @@ void main() {
       );
     });
 
-    test('updates existing card and deletes card cleanly', () async {
+    test('rejects mutating an existing card and deletes card cleanly', () async {
       final repo = InMemoryCardRepository();
       final initial = makeCard('c1', 'user-A');
       final updated = initial.copyWith(stats: const CardStats(strength: 9));
@@ -51,8 +51,10 @@ void main() {
       await repo.saveCard(userId: 'user-A', card: initial);
       expect((await repo.getCards(userId: 'user-A')).first.stats.strength, 5);
 
-      await repo.saveCard(userId: 'user-A', card: updated);
-      expect((await repo.getCards(userId: 'user-A')).first.stats.strength, 9);
+      expect(
+        () => repo.saveCard(userId: 'user-A', card: updated),
+        throwsA(isA<CardRepositoryException>()),
+      );
 
       await repo.deleteCard(userId: 'user-A', cardId: 'c1');
       expect(await repo.getCards(userId: 'user-A'), isEmpty);
