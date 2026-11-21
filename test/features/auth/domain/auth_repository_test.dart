@@ -60,5 +60,17 @@ void main() {
       expect(u1.hashCode, equals(u2.hashCode));
       expect(u1, isNot(equals(u3)));
     });
+
+    test('signs in with email and password', () async {
+      final repo = MockAuthRepository();
+      final user = await repo.signInWithEmailAndPassword(
+        email: 'serhat@photalchemy.io',
+        password: 'Photalchemy2026!',
+      );
+      expect(user.email, 'serhat@photalchemy.io');
+      expect(user.isAnonymous, isFalse);
+      expect(repo.currentUser, equals(user));
+      repo.dispose();
+    });
   });
 }

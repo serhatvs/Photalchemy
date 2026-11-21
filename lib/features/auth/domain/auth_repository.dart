@@ -40,6 +40,12 @@ abstract class AuthRepository {
 
   Stream<AuthUser?> authStateChanges();
 
+  Future<AuthUser> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) =>
+      signInWithGoogle();
+
   Future<AuthUser> signInWithGoogle();
 
   Future<AuthUser> signInAnonymously();
@@ -65,6 +71,25 @@ class MockAuthRepository implements AuthRepository {
 
   @override
   Stream<AuthUser?> authStateChanges() => _controller.stream;
+
+  @override
+  Future<AuthUser> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    final trimmed = email.trim();
+    final resolvedEmail =
+        trimmed.isEmpty ? 'alchemist@photalchemy.io' : trimmed;
+    final user = AuthUser(
+      id: 'usr_google_123',
+      email: resolvedEmail,
+      displayName: 'Master Alchemist',
+      isAnonymous: false,
+    );
+    _currentUser = user;
+    _controller.add(user);
+    return user;
+  }
 
   @override
   Future<AuthUser> signInWithGoogle() async {

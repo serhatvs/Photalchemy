@@ -152,5 +152,30 @@ void main() {
       await controller.toggleNotifications(true);
       expect(controller.notificationsEnabled, isFalse);
     });
+
+    test('signs in with Firebase email and password and creates profile',
+        () async {
+      final auth = MockAuthRepository();
+      final gateway = RuleEnforcingInMemoryFirestoreGateway();
+      final profileRepo = FirestoreProfileRepository(
+        gateway: gateway,
+        authenticatedUidProvider: () => auth.currentUser?.id,
+      );
+      final controller = AppController(
+        authRepository: auth,
+        profileRepository: profileRepo,
+      );
+      addTearDown(controller.dispose);
+
+      await controller.signInWithEmailAndPassword(
+        email: 'alchemist@photalchemy.io',
+        password: 'Photalchemy2026!',
+      );
+      expect(controller.isAuthenticated, isTrue);
+      expect(controller.userEmail, 'alchemist@photalchemy.io');
+
+      final profile = await profileRepo.getProfile(userId: controller.userId!);
+      expect(profile?.email, 'alchemist@photalchemy.io');
+    });
   });
 }

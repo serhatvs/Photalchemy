@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:photalchemy/app/app_controller.dart';
 import 'package:photalchemy/app/app_shell.dart';
 
 class PhotalchemyApp extends StatelessWidget {
-  const PhotalchemyApp({super.key});
+  const PhotalchemyApp({super.key, this.controller});
+
+  final AppController? controller;
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +16,7 @@ class PhotalchemyApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF5468FF)),
       ),
-      home: const AppShell(),
+      home: AppShell(controller: controller),
     );
   }
 }

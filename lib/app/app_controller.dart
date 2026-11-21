@@ -364,10 +364,26 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> signInWithGoogle() async {
+    await _performSignIn(() => _authRepository.signInWithGoogle());
+  }
+
+  Future<void> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    await _performSignIn(
+      () => _authRepository.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      ),
+    );
+  }
+
+  Future<void> _performSignIn(Future<AuthUser> Function() signInAction) async {
     _isAuthBusy = true;
     notifyListeners();
     try {
-      final user = await _authRepository.signInWithGoogle();
+      final user = await signInAction();
       UserProfile? existingProfile;
       try {
         existingProfile = await _profileRepository.getProfile(userId: user.id);
