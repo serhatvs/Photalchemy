@@ -114,6 +114,11 @@ class _AppShellState extends State<AppShell> {
                   email: _controller.userEmail,
                   notificationsEnabled: _controller.notificationsEnabled,
                   onSignIn: _controller.signInWithGoogle,
+                  onSignInWithEmail: (email, password) =>
+                      _controller.signInWithEmailAndPassword(
+                    email: email,
+                    password: password,
+                  ),
                   onSignOut: _controller.signOut,
                   onToggleNotifications: _controller.toggleNotifications,
                   onSendDemoNotification: _controller.sendDemoNotification,
