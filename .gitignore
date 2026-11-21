@@ -110,6 +110,9 @@ firestore-debug.log
 # Coverage
 coverage/
 
+# Local Canvas submission exports
+submissions/
+
 # Symbols
 app.*.symbols
 

@@ -65,6 +65,7 @@ flutter pub get
 dart format --output=none --set-exit-if-changed lib test integration_test
 flutter analyze
 flutter test
+flutter test -d flutter-tester integration_test
 ```
 
 ### Running on the Android Emulator

@@ -199,6 +199,30 @@ void main() {
       expect(find.text('Resolving combat turn...'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
+
+    testWidgets('shows stun badges, turn summary and Play Again on game over',
+        (tester) async {
+      var resetCalled = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: BattlePage(
+              enemyHp: 0,
+              isEnemyStunned: true,
+              isGameOver: true,
+              lastTurnSummary: 'Player dealt 4 damage.',
+              onResetBattle: () => resetCalled = true,
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('STUNNED'), findsOneWidget);
+      expect(find.text('Player dealt 4 damage.'), findsOneWidget);
+      expect(find.text('DRAW'), findsOneWidget);
+      await tester.tap(find.text('Play Again'));
+      expect(resetCalled, isTrue);
+    });
   });
 
   group('ExplorePage widget states', () {
