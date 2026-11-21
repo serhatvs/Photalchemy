@@ -4,7 +4,7 @@
 
 Photalchemy is a **location-based, turn-based card game for mobile** where the places you visit and the photos you take shape your deck. The game combines real-world exploration, photo-based card generation, and strategic dungeon battles.
 
-> **Project status (Team Lunerya — No. T13):** **P1 Skeleton implemented.** The navigable Flutter app (`Explore`, `Cards`, `Battle`, `Account`), `AppController` (`ChangeNotifier`) state management, deterministic color-to-card pipeline, turn-based `BattleEngine`, rule-enforced Firestore repositories, FCM notification opt-in scaffolding, unit/widget/integration tests, CI workflow, and P1 ADRs are in place. Live cloud credentials (`google-services.json`), camera hardware decoding, Track A model training, and Track B live LLM tool-calling are scheduled for P2/P3.
+> **Project status (Team Lunerya — No. T13):** **P1 Skeleton & Live Firebase Auth/Firestore verified on `main`.** The navigable Flutter app (`Explore`, `Cards`, `Battle`, `Account`), `AppController` (`ChangeNotifier`) state management, live `FirebaseAuthRepository` (`firebase_auth`) and `CloudFirestoreGateway` (`cloud_firestore`) with deployed default-deny `firestore.rules` (plus credential-free in-memory fallback for CI), deterministic color-to-card pipeline, turn-based `BattleEngine`, FCM notification opt-in scaffolding, 93 unit/widget tests, 1 end-to-end integration test, CI workflow, and 3 P1 ADRs are merged on `main`. Camera hardware decoding, Track A model training, and Track B live LLM tool-calling are scheduled for P2/P3.
 
 ## The Story
 
