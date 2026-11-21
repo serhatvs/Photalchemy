@@ -46,6 +46,12 @@ abstract class AuthRepository {
   }) =>
       signInWithGoogle();
 
+  Future<AuthUser> registerWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) =>
+      signInWithEmailAndPassword(email: email, password: password);
+
   Future<AuthUser> signInWithGoogle();
 
   Future<AuthUser> signInAnonymously();
@@ -78,17 +84,29 @@ class MockAuthRepository implements AuthRepository {
     required String password,
   }) async {
     final trimmed = email.trim();
-    final resolvedEmail =
-        trimmed.isEmpty ? 'alchemist@photalchemy.io' : trimmed;
+    if (trimmed.isEmpty || !trimmed.contains('@') || !trimmed.contains('.')) {
+      throw ArgumentError('Please enter a valid email address.');
+    }
+    if (password.length < 6) {
+      throw ArgumentError('Password must be at least 6 characters.');
+    }
     final user = AuthUser(
       id: 'usr_google_123',
-      email: resolvedEmail,
+      email: trimmed,
       displayName: 'Master Alchemist',
       isAnonymous: false,
     );
     _currentUser = user;
     _controller.add(user);
     return user;
+  }
+
+  @override
+  Future<AuthUser> registerWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    return signInWithEmailAndPassword(email: email, password: password);
   }
 
   @override

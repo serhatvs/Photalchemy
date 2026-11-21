@@ -110,12 +110,19 @@ class _AppShellState extends State<AppShell> {
                 ),
                 AccountPage(
                   isAuthenticated: _controller.isAuthenticated,
+                  isAuthBusy: _controller.isAuthBusy,
+                  authErrorMessage: _controller.authErrorMessage,
                   userId: _controller.userId,
                   email: _controller.userEmail,
                   notificationsEnabled: _controller.notificationsEnabled,
                   onSignIn: _controller.signInWithGoogle,
                   onSignInWithEmail: (email, password) =>
                       _controller.signInWithEmailAndPassword(
+                    email: email,
+                    password: password,
+                  ),
+                  onRegisterWithEmail: (email, password) =>
+                      _controller.registerWithEmailAndPassword(
                     email: email,
                     password: password,
                   ),
