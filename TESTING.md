@@ -1,6 +1,6 @@
 # Test Strategy — Photalchemy
 
-> The current repository contains **placeholders**, not yet a runnable Flutter application. Commands and test matrix below define the intended future workflow, not existing passing tests.
+> The repository includes a runnable Flutter application and automated unit/widget test suite verified in GitHub Actions CI. See [`docs/FIREBASE_AND_DEMO.md`](docs/FIREBASE_AND_DEMO.md) for the P1 emulator walkthrough and Firestore security-rule test details.
 
 **Coordination:** Serhat (quality), with Kadir (gameplay/agent), Şükrü (backend), and Ali (UI).
 

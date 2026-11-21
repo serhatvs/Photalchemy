@@ -1,6 +1,6 @@
 # Photalchemy — Proposed Architecture
 
-> **Status:** Architecture proposal for COMP205; no Flutter app or AI model is implemented in the repository yet. Confirm interfaces and privacy choices as a team before implementing.
+> **Status:** P1 architecture implemented (Flutter UI shell, deterministic card/color domain, turn-based battle engine, rule-enforced Firestore repositories, and FCM notification scaffolding). Track A model training and Track B live LLM tool-calling agent are scheduled for P2.
 
 ## Modules and ownership
 
