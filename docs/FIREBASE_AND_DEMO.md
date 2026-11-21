@@ -8,8 +8,13 @@ This document covers the **Issue #4** Firebase setup, Firestore data model, defa
 
 Per [`SECURITY.md`](../SECURITY.md) and [`PRIVACY.md`](../PRIVACY.md), **no service-account keys, private tokens, or environment-specific `google-services.json` files are committed to Git**.
 
-### Default Local & CI Mode (Zero Cloud Credentials Required)
-Out of the box, [`AppShell`](../lib/app/app_shell.dart) runs with:
+### Live Firebase Mode (When `android/app/google-services.json` Is Present)
+When `android/app/google-services.json` is placed in `android/app/` (registered to Firebase project `comp205-lab5-serhat-5e421`, Android package `com.photalchemy.photalchemy`, App ID `1:229894502315:android:59b46ea35cf0dd047844ee`), [`main.dart`](../lib/main.dart) initializes `Firebase.initializeApp()` and runs [`AppShell`](../lib/app/app_shell.dart) with:
+- [`FirebaseAuthRepository`](../lib/features/auth/data/firebase_auth_repository.dart) backed by `FirebaseAuth.instance` for real Firebase Email/Password and Google authentication.
+- [`CloudFirestoreGateway`](../lib/core/storage/cloud_firestore_gateway.dart) backed by `FirebaseFirestore.instance`, persisting `/users/{userId}` via [`FirestoreProfileRepository`](../lib/features/auth/domain/profile_repository.dart) and `/users/{userId}/cards/{cardId}` via [`FirestoreCardRepository`](../lib/features/cards/data/firestore_card_repository.dart) under the deployed [`firestore.rules`](../firestore.rules).
+
+### Default Local & CI Fallback Mode (Zero Cloud Credentials Required in Git)
+When `google-services.json` is absent (such as on GitHub Actions CI runners or a fresh clone before configuring Firebase), [`AppController`](../lib/app/app_controller.dart) automatically falls back to:
 - [`MockAuthRepository`](../lib/features/auth/domain/auth_repository.dart) for deterministic sign-in/sign-out.
 - [`RuleEnforcingInMemoryFirestoreGateway`](../lib/core/storage/firestore_gateway.dart) backing [`FirestoreProfileRepository`](../lib/features/auth/domain/profile_repository.dart) and [`FirestoreCardRepository`](../lib/features/cards/data/firestore_card_repository.dart), which enforces the exact rules defined in [`firestore.rules`](../firestore.rules).
 - [`MockFcmNotificationService`](../lib/core/notifications/notification_service.dart) for opted-in FCM topic subscription and notification delivery.
