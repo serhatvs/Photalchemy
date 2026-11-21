@@ -88,7 +88,14 @@ class SyntheticMatchDatasetGenerator {
     );
 
     while (!state.isGameOver) {
-      final actingObs = state.createObservation(legalActions: actingDeck);
+      final actingObs = BattleState(
+        turnNumber: state.turnNumber,
+        player: state.enemy,
+        enemy: state.player,
+        lastPlayerCardType: state.history.isNotEmpty
+            ? state.history.last.enemyAction?.cardType
+            : null,
+      ).createObservation(legalActions: actingDeck);
       final oppObs = state.createObservation(legalActions: opponentDeck);
 
       final actingActionId = state.player.isStunned
@@ -99,19 +106,18 @@ class SyntheticMatchDatasetGenerator {
           : await opponentPolicy.chooseAction(oppObs);
 
       final pAction = actingActionId != null
-          ? actingDeck.firstWhere((a) => a.id == actingActionId)
+          ? validateEnemyAction(actingObs, actingActionId)
           : null;
-      final eAction = oppActionId != null
-          ? opponentDeck.firstWhere((a) => a.id == oppActionId)
-          : null;
+      final eAction =
+          oppActionId != null ? validateEnemyAction(oppObs, oppActionId) : null;
 
       if (pAction != null) {
         records.add(
           _IntermediaryDecision(
             decisionId: '$matchGroupId-s$matchSeed-t${state.turnNumber}',
             turnIndex: state.turnNumber,
-            enemyHp: state.enemy.hp,
-            playerHp: state.player.hp,
+            enemyHp: actingObs.enemyHp,
+            playerHp: actingObs.playerHp,
             legalActionsJson:
                 jsonEncode(actingDeck.map((a) => a.toJson()).toList()),
             actionId: pAction.id,

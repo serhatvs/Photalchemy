@@ -75,10 +75,11 @@ class InMemoryCardRepository implements CardRepository {
     final existingIndex = userCards.indexWhere((c) => c.id == card.id);
 
     if (existingIndex >= 0) {
-      userCards[existingIndex] = card;
-    } else {
-      userCards.add(card);
+      throw const CardRepositoryException(
+        'Card updates are denied by firestore.rules (cards are immutable once minted).',
+      );
     }
+    userCards.add(card);
   }
 
   @override

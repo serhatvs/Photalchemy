@@ -185,5 +185,45 @@ void main() {
       expect(controller.isAuthenticated, isFalse);
       expect(controller.authErrorMessage, isNotNull);
     });
+
+    test(
+        'avoids card ID collisions whenguest captures before sign-in and replaces guest cards on sign-in',
+        () async {
+      final auth = MockAuthRepository();
+      final gateway = RuleEnforcingInMemoryFirestoreGateway();
+      final cardsRepo = FirestoreCardRepository(
+        gateway: gateway,
+        authenticatedUidProvider: () => auth.currentUser?.id,
+      );
+      final profileRepo = FirestoreProfileRepository(
+        gateway: gateway,
+        authenticatedUidProvider: () => auth.currentUser?.id,
+      );
+
+      final controller1 = AppController(
+        authRepository: auth,
+        cardRepository: cardsRepo,
+        profileRepository: profileRepo,
+      );
+      addTearDown(controller1.dispose);
+
+      // First session: sign in and mint card-2 into Firestore
+      await controller1.signInWithGoogle();
+      await controller1.captureAndTransmute();
+      expect(controller1.collection.map((c) => c.id), contains('card-2'));
+      await controller1.signOut();
+
+      // Second session: capture as guest first (creates local card-3), then sign in
+      await controller1.captureAndTransmute();
+      await controller1.signInWithGoogle();
+
+      // Guest card is replaced by persisted Firestore collection + starterCard
+      expect(controller1.collection.every((c) => c.ownerId != 'guest'), isTrue);
+
+      // Next capture while signed in must not collide with existing card-2 in Firestore
+      await controller1.captureAndTransmute();
+      final persisted = await cardsRepo.getCards(userId: controller1.userId!);
+      expect(persisted, hasLength(2));
+    });
   });
 }

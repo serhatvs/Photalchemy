@@ -265,7 +265,14 @@ class BattleEngine {
     var state = initialState;
 
     while (!state.isGameOver) {
-      final playerObs = state.createObservation(legalActions: playerDeck);
+      final playerObs = BattleState(
+        turnNumber: state.turnNumber,
+        player: state.enemy,
+        enemy: state.player,
+        lastPlayerCardType: state.history.isNotEmpty
+            ? state.history.last.enemyAction?.cardType
+            : null,
+      ).createObservation(legalActions: playerDeck);
       final enemyObs = state.createObservation(legalActions: enemyDeck);
 
       final playerId = state.player.isStunned
@@ -275,11 +282,10 @@ class BattleEngine {
           ? null
           : await enemyPolicy.chooseAction(enemyObs);
 
-      final pAction = playerId != null
-          ? playerDeck.firstWhere((a) => a.id == playerId)
-          : null;
+      final pAction =
+          playerId != null ? validateEnemyAction(playerObs, playerId) : null;
       final eAction =
-          enemyId != null ? enemyDeck.firstWhere((a) => a.id == enemyId) : null;
+          enemyId != null ? validateEnemyAction(enemyObs, enemyId) : null;
 
       state = resolveTurn(
         state: state,
