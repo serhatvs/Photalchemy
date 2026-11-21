@@ -176,6 +176,14 @@ void main() {
 
       final profile = await profileRepo.getProfile(userId: controller.userId!);
       expect(profile?.email, 'alchemist@photalchemy.io');
+
+      await controller.signOut();
+      await controller.registerWithEmailAndPassword(
+        email: 'invalid-email',
+        password: '123',
+      );
+      expect(controller.isAuthenticated, isFalse);
+      expect(controller.authErrorMessage, isNotNull);
     });
   });
 }

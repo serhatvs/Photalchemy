@@ -110,6 +110,8 @@ class AppController extends ChangeNotifier {
   final List<GameCard> _collection = [starterCard];
   int _captureSceneIndex = 0;
 
+  String? _authErrorMessage;
+
   BattleState _battleState = _initialBattleState();
   bool _isResolvingTurn = false;
   String? _lastTurnSummary;
@@ -174,6 +176,7 @@ class AppController extends ChangeNotifier {
   LocationPermission get locationPermission => _locationPermission;
   bool get isAuthenticated => _isAuthenticated;
   bool get isAuthBusy => _isAuthBusy;
+  String? get authErrorMessage => _authErrorMessage;
   String? get userId => _userId;
   String? get userEmail => _userEmail;
   bool get notificationsEnabled => _notificationsEnabled;
@@ -379,8 +382,21 @@ class AppController extends ChangeNotifier {
     );
   }
 
+  Future<void> registerWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    await _performSignIn(
+      () => _authRepository.registerWithEmailAndPassword(
+        email: email,
+        password: password,
+      ),
+    );
+  }
+
   Future<void> _performSignIn(Future<AuthUser> Function() signInAction) async {
     _isAuthBusy = true;
+    _authErrorMessage = null;
     notifyListeners();
     try {
       final user = await signInAction();
@@ -410,7 +426,9 @@ class AppController extends ChangeNotifier {
 
       await reloadCollection();
     } catch (e) {
-      _emitMessage('Sign in failed: $e');
+      final cleaned = e.toString().replaceFirst(RegExp(r'^\[.*?\]\s*'), '');
+      _authErrorMessage = cleaned;
+      _emitMessage('Authentication failed: $cleaned');
     } finally {
       _isAuthBusy = false;
       notifyListeners();
@@ -420,6 +438,7 @@ class AppController extends ChangeNotifier {
   Future<void> signOut() async {
     await _authRepository.signOut();
     _isAuthenticated = false;
+    _authErrorMessage = null;
     _userId = null;
     _userEmail = null;
     _notificationsEnabled = false;

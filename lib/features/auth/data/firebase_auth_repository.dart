@@ -4,19 +4,20 @@ import 'package:photalchemy/features/auth/domain/auth_repository.dart';
 /// Production [AuthRepository] backed by real Firebase Authentication
 /// ([fb_auth.FirebaseAuth]).
 ///
-/// Supports real email/password sign-in (auto-registering new accounts when not
-/// yet found in Firebase Auth), Google OAuth provider / credential fallback,
-/// anonymous guest sign-in, and sign-out.
+/// Enforces real Firebase Authentication errors without silent fallbacks:
+/// - [signInWithEmailAndPassword] authenticates an existing account and throws
+///   on wrong email, wrong password, or user-not-found.
+/// - [registerWithEmailAndPassword] creates a brand-new account in Firebase
+///   Auth and throws if the email is malformed, already in use, or password is
+///   too weak.
+/// - [signInWithGoogle] invokes the native Firebase Google OAuth provider and
+///   surfaces any configuration or cancellation errors directly.
 class FirebaseAuthRepository implements AuthRepository {
   FirebaseAuthRepository({
     fb_auth.FirebaseAuth? firebaseAuth,
-    this.defaultDemoEmail = 'alchemist@photalchemy.io',
-    this.defaultDemoPassword = 'Photalchemy2026!',
   }) : _firebaseAuth = firebaseAuth ?? fb_auth.FirebaseAuth.instance;
 
   final fb_auth.FirebaseAuth _firebaseAuth;
-  final String defaultDemoEmail;
-  final String defaultDemoPassword;
 
   static AuthUser _mapFirebaseUser(fb_auth.User user) {
     return AuthUser(
@@ -26,6 +27,23 @@ class FirebaseAuthRepository implements AuthRepository {
           (user.isAnonymous ? 'Guest Alchemist' : 'Master Alchemist'),
       isAnonymous: user.isAnonymous,
     );
+  }
+
+  static void _validateCredentials(String email, String password) {
+    final trimmed = email.trim();
+    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (trimmed.isEmpty || !emailRegex.hasMatch(trimmed)) {
+      throw fb_auth.FirebaseAuthException(
+        code: 'invalid-email',
+        message: 'Please enter a valid email address (e.g. name@domain.com).',
+      );
+    }
+    if (password.isEmpty) {
+      throw fb_auth.FirebaseAuthException(
+        code: 'missing-password',
+        message: 'Please enter your password.',
+      );
+    }
   }
 
   @override
@@ -47,53 +65,53 @@ class FirebaseAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    final trimmedEmail = email.trim();
-    try {
-      final credential = await _firebaseAuth.signInWithEmailAndPassword(
-        email: trimmedEmail,
-        password: password,
-      );
-      final user = credential.user;
-      if (user == null) {
-        throw StateError('Firebase Auth returned a null user after sign-in.');
-      }
-      return _mapFirebaseUser(user);
-    } on fb_auth.FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found' || e.code == 'invalid-credential') {
-        final created = await _firebaseAuth.createUserWithEmailAndPassword(
-          email: trimmedEmail,
-          password: password,
-        );
-        final user = created.user;
-        if (user == null) {
-          throw StateError(
-            'Firebase Auth returned a null user after account registration.',
-          );
-        }
-        await user.updateDisplayName('Master Alchemist');
-        return _mapFirebaseUser(_firebaseAuth.currentUser ?? user);
-      }
-      rethrow;
+    _validateCredentials(email, password);
+    final credential = await _firebaseAuth.signInWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final user = credential.user;
+    if (user == null) {
+      throw StateError('Firebase Auth returned a null user after sign-in.');
     }
+    return _mapFirebaseUser(user);
+  }
+
+  @override
+  Future<AuthUser> registerWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    _validateCredentials(email, password);
+    if (password.length < 6) {
+      throw fb_auth.FirebaseAuthException(
+        code: 'weak-password',
+        message: 'Password must be at least 6 characters long.',
+      );
+    }
+    final created = await _firebaseAuth.createUserWithEmailAndPassword(
+      email: email.trim(),
+      password: password,
+    );
+    final user = created.user;
+    if (user == null) {
+      throw StateError(
+        'Firebase Auth returned a null user after account registration.',
+      );
+    }
+    await user.updateDisplayName('Master Alchemist');
+    return _mapFirebaseUser(_firebaseAuth.currentUser ?? user);
   }
 
   @override
   Future<AuthUser> signInWithGoogle() async {
-    try {
-      final credential =
-          await _firebaseAuth.signInWithProvider(fb_auth.GoogleAuthProvider());
-      final user = credential.user;
-      if (user != null) {
-        return _mapFirebaseUser(user);
-      }
-    } catch (_) {
-      // Fall back to live Firebase Auth email/password account when Google
-      // OAuth Play Services dialog is unavailable on the emulator.
+    final credential =
+        await _firebaseAuth.signInWithProvider(fb_auth.GoogleAuthProvider());
+    final user = credential.user;
+    if (user == null) {
+      throw StateError('Google sign-in did not return an authenticated user.');
     }
-    return signInWithEmailAndPassword(
-      email: defaultDemoEmail,
-      password: defaultDemoPassword,
-    );
+    return _mapFirebaseUser(user);
   }
 
   @override
