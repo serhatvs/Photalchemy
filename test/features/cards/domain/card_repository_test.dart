@@ -43,7 +43,8 @@ void main() {
       );
     });
 
-    test('rejects mutating an existing card and deletes card cleanly', () async {
+    test('rejects mutating an existing card and deletes card cleanly',
+        () async {
       final repo = InMemoryCardRepository();
       final initial = makeCard('c1', 'user-A');
       final updated = initial.copyWith(stats: const CardStats(strength: 9));
