@@ -123,6 +123,9 @@ class _AppShellState extends State<AppShell> {
                   userId: _controller.userId,
                   email: _controller.userEmail,
                   notificationsEnabled: _controller.notificationsEnabled,
+                  victoriesCount: _controller.victoriesCount,
+                  defeatsCount: _controller.defeatsCount,
+                  totalEncounters: _controller.battleHistory.length,
                   onSignIn: _controller.signInWithGoogle,
                   onSignInWithEmail: (email, password) =>
                       _controller.signInWithEmailAndPassword(

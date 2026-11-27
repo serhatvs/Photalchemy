@@ -4,6 +4,7 @@ import 'package:photalchemy/app/app.dart';
 import 'package:photalchemy/app/app_controller.dart';
 import 'package:photalchemy/core/storage/cloud_firestore_gateway.dart';
 import 'package:photalchemy/features/auth/data/firebase_auth_repository.dart';
+import 'package:photalchemy/features/auth/domain/battle_history_repository.dart';
 import 'package:photalchemy/features/auth/domain/profile_repository.dart';
 import 'package:photalchemy/features/cards/data/firestore_card_repository.dart';
 
@@ -22,6 +23,10 @@ Future<void> main() async {
         authenticatedUidProvider: () => authRepository.currentUser?.id,
       ),
       profileRepository: FirestoreProfileRepository(
+        gateway: firestoreGateway,
+        authenticatedUidProvider: () => authRepository.currentUser?.id,
+      ),
+      battleHistoryRepository: FirestoreBattleHistoryRepository(
         gateway: firestoreGateway,
         authenticatedUidProvider: () => authRepository.currentUser?.id,
       ),

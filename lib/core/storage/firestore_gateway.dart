@@ -51,6 +51,7 @@ class RuleEnforcingInMemoryFirestoreGateway implements FirestoreGateway {
 
   static const _validCardTypes = {'attack', 'defense', 'stun', 'reflect'};
   static const _validRarities = {'common', 'uncommon', 'rare', 'epic'};
+  static const _validBattleOutcomes = {'victory', 'defeat', 'draw'};
 
   void _checkNetwork() {
     if (simulateOffline) {
@@ -88,11 +89,11 @@ class RuleEnforcingInMemoryFirestoreGateway implements FirestoreGateway {
     }
     if (segments.length == 4 &&
         segments[0] == 'users' &&
-        segments[2] == 'cards') {
+        (segments[2] == 'cards' || segments[2] == 'battles')) {
       if (segments[1] != uid) {
         throw const FirestoreSecurityException(
           'permission-denied',
-          'Cross-user card read denied by firestore.rules.',
+          'Cross-user read denied by firestore.rules.',
         );
       }
       return;
@@ -154,6 +155,33 @@ class RuleEnforcingInMemoryFirestoreGateway implements FirestoreGateway {
       return;
     }
 
+    if (segments.length == 4 &&
+        segments[0] == 'users' &&
+        segments[2] == 'battles') {
+      final userId = segments[1];
+      final battleId = segments[3];
+      if (userId != uid) {
+        throw const FirestoreSecurityException(
+          'permission-denied',
+          'Cross-user battle write denied by firestore.rules.',
+        );
+      }
+      final normalized = segments.join('/');
+      if (_documents.containsKey(normalized)) {
+        throw const FirestoreSecurityException(
+          'permission-denied',
+          'Battle history updates are denied by firestore.rules (records are immutable).',
+        );
+      }
+      if (!_isValidBattlePayload(userId, battleId, data)) {
+        throw const FirestoreSecurityException(
+          'permission-denied',
+          'Invalid battle payload rejected by firestore.rules.',
+        );
+      }
+      return;
+    }
+
     throw const FirestoreSecurityException(
       'permission-denied',
       'Default-deny rule blocked write to path.',
@@ -199,6 +227,35 @@ class RuleEnforcingInMemoryFirestoreGateway implements FirestoreGateway {
     return true;
   }
 
+  bool _isValidBattlePayload(
+    String userId,
+    String battleId,
+    Map<String, dynamic> data,
+  ) {
+    final id = data['id'];
+    final recordUserId = data['userId'];
+    final outcome = data['outcome'];
+    final turnsPlayed = data['turnsPlayed'];
+    final playerFinalHp = data['playerFinalHp'];
+    final enemyFinalHp = data['enemyFinalHp'];
+
+    if (id is! String || id != battleId) return false;
+    if (recordUserId is! String || recordUserId != userId) return false;
+    if (outcome is! String || !_validBattleOutcomes.contains(outcome)) {
+      return false;
+    }
+    if (turnsPlayed is! int || turnsPlayed < 1 || turnsPlayed > 51) {
+      return false;
+    }
+    if (playerFinalHp is! int || playerFinalHp < 0 || playerFinalHp > 10) {
+      return false;
+    }
+    if (enemyFinalHp is! int || enemyFinalHp < 0 || enemyFinalHp > 10) {
+      return false;
+    }
+    return true;
+  }
+
   @override
   Future<Map<String, dynamic>?> getDocument({
     required String path,
@@ -224,7 +281,7 @@ class RuleEnforcingInMemoryFirestoreGateway implements FirestoreGateway {
 
     if (segments.length != 3 ||
         segments[0] != 'users' ||
-        segments[2] != 'cards') {
+        (segments[2] != 'cards' && segments[2] != 'battles')) {
       throw const FirestoreSecurityException(
         'permission-denied',
         'Default-deny rule blocked collection query.',

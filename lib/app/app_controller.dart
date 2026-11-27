@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:photalchemy/core/notifications/notification_service.dart';
 import 'package:photalchemy/core/storage/firestore_gateway.dart';
 import 'package:photalchemy/features/auth/domain/auth_repository.dart';
+import 'package:photalchemy/features/auth/domain/battle_history_repository.dart';
 import 'package:photalchemy/features/auth/domain/profile_repository.dart';
 import 'package:photalchemy/features/battle/domain/battle_engine.dart';
 import 'package:photalchemy/features/battle/domain/enemy_policy.dart';
@@ -21,6 +22,7 @@ class AppController extends ChangeNotifier {
     AuthRepository? authRepository,
     CardRepository? cardRepository,
     ProfileRepository? profileRepository,
+    BattleHistoryRepository? battleHistoryRepository,
     NotificationService? notificationService,
     LocationService? locationService,
     CardGenerator cardGenerator = const CardGenerator(),
@@ -46,6 +48,11 @@ class AppController extends ChangeNotifier {
         );
     _profileRepository = profileRepository ??
         FirestoreProfileRepository(
+          gateway: gateway,
+          authenticatedUidProvider: () => _authRepository.currentUser?.id,
+        );
+    _battleHistoryRepository = battleHistoryRepository ??
+        FirestoreBattleHistoryRepository(
           gateway: gateway,
           authenticatedUidProvider: () => _authRepository.currentUser?.id,
         );
@@ -88,6 +95,7 @@ class AppController extends ChangeNotifier {
   late final AuthRepository _authRepository;
   late final CardRepository _cardRepository;
   late final ProfileRepository _profileRepository;
+  late final BattleHistoryRepository _battleHistoryRepository;
   late final NotificationService _notificationService;
   late final EnemyPolicy _enemyPolicy;
   final CardGenerator _cardGenerator;
@@ -112,8 +120,10 @@ class AppController extends ChangeNotifier {
   bool _isCollectionLoading = false;
   String? _collectionErrorMessage;
   final List<GameCard> _collection = [starterCard];
+  final List<BattleHistoryRecord> _battleHistory = [];
   int _captureSceneIndex = 0;
   int _mintCounter = 1;
+  int _battleCounter = 0;
 
   String? _authErrorMessage;
 
@@ -202,6 +212,12 @@ class AppController extends ChangeNotifier {
   bool get isCollectionLoading => _isCollectionLoading;
   String? get collectionErrorMessage => _collectionErrorMessage;
   List<GameCard> get collection => List.unmodifiable(_collection);
+  List<BattleHistoryRecord> get battleHistory =>
+      List.unmodifiable(_battleHistory);
+  int get victoriesCount =>
+      _battleHistory.where((b) => b.outcome == BattleOutcome.victory).length;
+  int get defeatsCount =>
+      _battleHistory.where((b) => b.outcome == BattleOutcome.defeat).length;
   BattleState get battleState => _battleState;
   bool get isResolvingTurn => _isResolvingTurn;
   String? get lastTurnSummary => _lastTurnSummary;
@@ -338,6 +354,22 @@ class AppController extends ChangeNotifier {
     _emitMessage(
       'Synthesized ${card.type.name.toUpperCase()} card ($cardId)!',
     );
+
+    if (_notificationsEnabled) {
+      if (card.rarity == CardRarity.epic) {
+        await _triggerOptInNotification(
+          title: 'Epic Card Transmuted!',
+          body:
+              'You synthesized an EPIC ${card.type.name.toUpperCase()} card ($cardId)!',
+        );
+      } else if (isCurrentCellDepleted) {
+        await _triggerOptInNotification(
+          title: 'Sector Resonance Depleted',
+          body:
+              '${_locationService.currentCellName} reached $repeatDecayThreshold/$repeatDecayThreshold captures. Travel to a new cell for rare cards!',
+        );
+      }
+    }
   }
 
   Future<void> reloadCollection() async {
@@ -408,6 +440,7 @@ class AppController extends ChangeNotifier {
                 ? 'Defeat! Player was defeated!'
                 : 'Draw match!';
         _emitMessage(winnerText);
+        await _recordCompletedBattle(nextState);
       }
     } finally {
       _isResolvingTurn = false;
@@ -496,6 +529,7 @@ class AppController extends ChangeNotifier {
       }
 
       await reloadCollection();
+      await reloadBattleHistory();
     } catch (e) {
       final cleaned = e.toString().replaceFirst(RegExp(r'^\[.*?\]\s*'), '');
       _authErrorMessage = cleaned;
@@ -518,7 +552,92 @@ class AppController extends ChangeNotifier {
     _collection
       ..clear()
       ..add(starterCard);
+    _battleHistory.clear();
     notifyListeners();
+  }
+
+  Future<void> reloadBattleHistory() async {
+    if (!_isAuthenticated || _userId == null) {
+      _battleHistory.clear();
+      notifyListeners();
+      return;
+    }
+    try {
+      final persisted =
+          await _battleHistoryRepository.getBattles(userId: _userId!);
+      _battleHistory
+        ..clear()
+        ..addAll(persisted);
+      for (final record in persisted) {
+        final match = RegExp(r'^battle-(\d+)$').firstMatch(record.id);
+        if (match != null) {
+          final parsed = int.tryParse(match.group(1)!);
+          if (parsed != null && parsed > _battleCounter) {
+            _battleCounter = parsed;
+          }
+        }
+      }
+      notifyListeners();
+    } on BattleHistoryRepositoryException catch (e) {
+      _emitMessage('Battle history sync warning: ${e.message}');
+    }
+  }
+
+  Future<void> _recordCompletedBattle(BattleState completedState) async {
+    final outcome = completedState.winner == CombatantSide.player
+        ? BattleOutcome.victory
+        : completedState.winner == CombatantSide.enemy
+            ? BattleOutcome.defeat
+            : BattleOutcome.draw;
+    final existingIds = _battleHistory.map((b) => b.id).toSet();
+    do {
+      _battleCounter += 1;
+    } while (existingIds.contains('battle-$_battleCounter'));
+    final battleId = 'battle-$_battleCounter';
+    final record = BattleHistoryRecord(
+      id: battleId,
+      userId: _isAuthenticated ? (_userId ?? 'player') : 'guest',
+      outcome: outcome,
+      turnsPlayed: (completedState.turnNumber - 1).clamp(1, 51),
+      playerFinalHp: completedState.player.hp,
+      enemyFinalHp: completedState.enemy.hp,
+    );
+
+    if (_isAuthenticated && _userId != null) {
+      try {
+        await _battleHistoryRepository.recordBattle(
+          userId: _userId!,
+          record: record,
+        );
+      } on BattleHistoryRepositoryException catch (e) {
+        _emitMessage('Failed to save battle history: ${e.message}');
+      }
+    }
+
+    _battleHistory.insert(0, record);
+    notifyListeners();
+
+    if (_notificationsEnabled && outcome == BattleOutcome.victory) {
+      await _triggerOptInNotification(
+        title: 'Dungeon Victory Recorded!',
+        body:
+            'Encounter $battleId cleared with ${completedState.player.hp} HP remaining ($victoriesCount total wins).',
+      );
+    }
+  }
+
+  Future<void> _triggerOptInNotification({
+    required String title,
+    required String body,
+  }) async {
+    try {
+      await _notificationService.sendDemoNotification(
+        title: title,
+        body: body,
+      );
+    } catch (_) {
+      // Non-fatal if permission is not granted.
+    }
   }
 
   Future<void> toggleNotifications(bool enabled) async {

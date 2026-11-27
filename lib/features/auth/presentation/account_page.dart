@@ -9,6 +9,9 @@ class AccountPage extends StatefulWidget {
     this.userId,
     this.email,
     this.notificationsEnabled = false,
+    this.victoriesCount = 0,
+    this.defeatsCount = 0,
+    this.totalEncounters = 0,
     this.onSignIn,
     this.onSignInWithEmail,
     this.onRegisterWithEmail,
@@ -23,6 +26,9 @@ class AccountPage extends StatefulWidget {
   final String? userId;
   final String? email;
   final bool notificationsEnabled;
+  final int victoriesCount;
+  final int defeatsCount;
+  final int totalEncounters;
   final VoidCallback? onSignIn;
   final void Function(String email, String password)? onSignInWithEmail;
   final void Function(String email, String password)? onRegisterWithEmail;
@@ -197,6 +203,12 @@ class _AccountPageState extends State<AccountPage> {
                   if (widget.isAuthenticated &&
                       widget.onToggleNotifications != null) ...[
                     const Divider(height: 24),
+                    Text(
+                      'Dungeon Record: ${widget.victoriesCount}W – ${widget.defeatsCount}L (${widget.totalEncounters} matches)',
+                      key: const Key('account_battle_record'),
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(height: 8),
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Dungeon Alerts (FCM)'),

@@ -56,6 +56,36 @@ service cloud.firestore {
         && data.cellCaptureCounts is map;
     }
 
+    function isValidBattleOutcome(outcome) {
+      return outcome in ['victory', 'defeat', 'draw'];
+    }
+
+    function isValidBattlePayload(userId, battleId) {
+      let data = request.resource.data;
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'outcome',
+          'turnsPlayed',
+          'playerFinalHp',
+          'enemyFinalHp'
+        ])
+        && data.id is string
+        && data.id == battleId
+        && data.userId is string
+        && data.userId == userId
+        && isValidBattleOutcome(data.outcome)
+        && data.turnsPlayed is int
+        && data.turnsPlayed >= 1
+        && data.turnsPlayed <= 51
+        && data.playerFinalHp is int
+        && data.playerFinalHp >= 0
+        && data.playerFinalHp <= 10
+        && data.enemyFinalHp is int
+        && data.enemyFinalHp >= 0
+        && data.enemyFinalHp <= 10;
+    }
+
     // Per-user profile document: strict owner-only access
     match /users/{userId} {
       allow read: if isOwner(userId);
@@ -66,6 +96,14 @@ service cloud.firestore {
       match /cards/{cardId} {
         allow read: if isOwner(userId);
         allow create: if isOwner(userId) && isValidCardPayload(userId, cardId);
+        allow update: if false;
+        allow delete: if isOwner(userId);
+      }
+
+      // Per-user battles subcollection: immutable match history records
+      match /battles/{battleId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidBattlePayload(userId, battleId);
         allow update: if false;
         allow delete: if isOwner(userId);
       }
