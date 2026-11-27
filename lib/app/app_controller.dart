@@ -11,6 +11,7 @@ import 'package:photalchemy/features/cards/domain/card_generator.dart';
 import 'package:photalchemy/features/cards/domain/card_repository.dart';
 import 'package:photalchemy/features/cards/domain/color_feature_extractor.dart';
 import 'package:photalchemy/features/cards/domain/game_card.dart';
+import 'package:photalchemy/features/exploration/domain/location_service.dart';
 import 'package:photalchemy/features/exploration/domain/rarity_policy.dart';
 
 /// Application-wide state controller decoupling Photalchemy UI screens from
@@ -21,6 +22,7 @@ class AppController extends ChangeNotifier {
     CardRepository? cardRepository,
     ProfileRepository? profileRepository,
     NotificationService? notificationService,
+    LocationService? locationService,
     CardGenerator cardGenerator = const CardGenerator(),
     ColorFeatureExtractor colorExtractor = const ColorFeatureExtractor(),
     RarityPolicy rarityPolicy = const RarityPolicy(),
@@ -31,8 +33,10 @@ class AppController extends ChangeNotifier {
         _colorExtractor = colorExtractor,
         _rarityPolicy = rarityPolicy,
         _battleEngine = battleEngine,
-        _demoLocation =
-            demoLocation ?? CoarseLocation.fromCoordinates(38.7205, 35.4826) {
+        _locationService = locationService ??
+            SimulatedLocationService(
+              initialLocation: demoLocation,
+            ) {
     final gateway = RuleEnforcingInMemoryFirestoreGateway();
     _authRepository = authRepository ?? MockAuthRepository();
     _cardRepository = cardRepository ??
@@ -90,7 +94,7 @@ class AppController extends ChangeNotifier {
   final ColorFeatureExtractor _colorExtractor;
   final RarityPolicy _rarityPolicy;
   final BattleEngine _battleEngine;
-  final CoarseLocation _demoLocation;
+  final LocationService _locationService;
 
   final StreamController<String> _messageController =
       StreamController<String>.broadcast();
@@ -98,7 +102,7 @@ class AppController extends ChangeNotifier {
 
   int _selectedIndex = 0;
   bool _hasCameraPermission = true;
-  LocationPermission _locationPermission = LocationPermission.granted;
+  Map<String, int> _localCellCaptureCounts = {};
   bool _isAuthenticated = false;
   bool _isAuthBusy = false;
   String? _userId;
@@ -174,7 +178,21 @@ class AppController extends ChangeNotifier {
   Stream<String> get messages => _messageController.stream;
   int get selectedIndex => _selectedIndex;
   bool get hasCameraPermission => _hasCameraPermission;
-  LocationPermission get locationPermission => _locationPermission;
+  LocationPermission get locationPermission => _locationService.permission;
+  CoarseLocation? get currentLocation => _locationService.currentLocation;
+  String get currentCellName => _locationService.currentCellName;
+  List<ExplorationCellPreset> get availableCells =>
+      _locationService.availableCells;
+  int get repeatDecayThreshold => _rarityPolicy.repeatDecayThreshold;
+  int get currentCellCaptures {
+    final loc = _locationService.currentLocation;
+    if (loc == null) return 0;
+    return _localCellCaptureCounts[loc.cellKey] ?? 0;
+  }
+
+  bool get isCurrentCellDepleted =>
+      _locationService.permission == LocationPermission.granted &&
+      currentCellCaptures >= _rarityPolicy.repeatDecayThreshold;
   bool get isAuthenticated => _isAuthenticated;
   bool get isAuthBusy => _isAuthBusy;
   String? get authErrorMessage => _authErrorMessage;
@@ -206,7 +224,22 @@ class AppController extends ChangeNotifier {
   }
 
   void setLocationPermission(LocationPermission permission) {
-    _locationPermission = permission;
+    final service = _locationService;
+    if (service is SimulatedLocationService) {
+      service.setPermission(permission);
+    } else {
+      service.setOptOut(permission != LocationPermission.granted);
+    }
+    notifyListeners();
+  }
+
+  Future<void> toggleLocationOptOut(bool optedOut) async {
+    await _locationService.setOptOut(optedOut);
+    notifyListeners();
+  }
+
+  void selectExplorationCell(ExplorationCellPreset preset) {
+    _locationService.selectCell(preset);
     notifyListeners();
   }
 
@@ -246,11 +279,16 @@ class AppController extends ChangeNotifier {
     final cardId = 'card-$_mintCounter';
     final ownerId = _isAuthenticated ? (_userId ?? 'player') : 'guest';
 
-    Map<String, int> cellCounts = const {};
+    final snapshot = await _locationService.getCurrentSnapshot();
+    Map<String, int> cellCounts =
+        Map<String, int>.from(_localCellCaptureCounts);
     if (_isAuthenticated && _userId != null) {
       try {
         final profile = await _profileRepository.getProfile(userId: _userId!);
-        cellCounts = profile?.cellCaptureCounts ?? const {};
+        if (profile != null) {
+          cellCounts = Map<String, int>.from(profile.cellCaptureCounts);
+          _localCellCaptureCounts = Map<String, int>.from(cellCounts);
+        }
       } on ProfileRepositoryException catch (e) {
         _emitMessage('Profile sync warning: ${e.message}');
       }
@@ -258,10 +296,8 @@ class AppController extends ChangeNotifier {
 
     final rarity = _rarityPolicy.determineRarity(
       features: features,
-      permission: _locationPermission,
-      location: _locationPermission == LocationPermission.granted
-          ? _demoLocation
-          : null,
+      permission: snapshot.permission,
+      location: snapshot.location,
       cellCaptureCounts: cellCounts,
     );
 
@@ -272,14 +308,21 @@ class AppController extends ChangeNotifier {
       rarity: rarity,
     );
 
+    if (snapshot.isLocationActive && snapshot.location != null) {
+      final cellKey = snapshot.location!.cellKey;
+      _localCellCaptureCounts[cellKey] = (cellCounts[cellKey] ?? 0) + 1;
+    }
+
     if (_isAuthenticated && _userId != null) {
       try {
         await _cardRepository.saveCard(userId: _userId!, card: card);
-        if (_locationPermission == LocationPermission.granted) {
-          await _profileRepository.incrementCellCapture(
+        if (snapshot.isLocationActive && snapshot.location != null) {
+          final updatedProfile = await _profileRepository.incrementCellCapture(
             userId: _userId!,
-            cellKey: _demoLocation.cellKey,
+            cellKey: snapshot.location!.cellKey,
           );
+          _localCellCaptureCounts =
+              Map<String, int>.from(updatedProfile.cellCaptureCounts);
         }
       } on CardRepositoryException catch (e) {
         _emitMessage('Failed to save card: ${e.message}');
@@ -435,6 +478,9 @@ class AppController extends ChangeNotifier {
       _userId = user.id;
       _userEmail = user.email;
       _notificationsEnabled = existingProfile?.notificationsEnabled ?? false;
+      _localCellCaptureCounts = Map<String, int>.from(
+        existingProfile?.cellCaptureCounts ?? const {},
+      );
 
       if (_notificationsEnabled) {
         try {
@@ -467,6 +513,7 @@ class AppController extends ChangeNotifier {
     _userId = null;
     _userEmail = null;
     _notificationsEnabled = false;
+    _localCellCaptureCounts = {};
     _collectionErrorMessage = null;
     _collection
       ..clear()
