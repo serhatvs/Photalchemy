@@ -83,6 +83,14 @@ class _AppShellState extends State<AppShell> {
                   hasPermission: _controller.hasCameraPermission,
                   onRequestPermission: _controller.grantCameraPermission,
                   onCapture: _controller.captureAndTransmute,
+                  locationPermission: _controller.locationPermission,
+                  currentCellName: _controller.currentCellName,
+                  currentCellKey: _controller.currentLocation?.cellKey,
+                  currentCellCaptures: _controller.currentCellCaptures,
+                  repeatDecayThreshold: _controller.repeatDecayThreshold,
+                  availableCells: _controller.availableCells,
+                  onSelectCell: _controller.selectExplorationCell,
+                  onToggleLocationOptOut: _controller.toggleLocationOptOut,
                 ),
                 CollectionPage(
                   cards: _controller.collection,
@@ -115,6 +123,9 @@ class _AppShellState extends State<AppShell> {
                   userId: _controller.userId,
                   email: _controller.userEmail,
                   notificationsEnabled: _controller.notificationsEnabled,
+                  victoriesCount: _controller.victoriesCount,
+                  defeatsCount: _controller.defeatsCount,
+                  totalEncounters: _controller.battleHistory.length,
                   onSignIn: _controller.signInWithGoogle,
                   onSignInWithEmail: (email, password) =>
                       _controller.signInWithEmailAndPassword(

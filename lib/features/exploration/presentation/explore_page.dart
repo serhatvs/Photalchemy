@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:photalchemy/features/exploration/domain/location_service.dart';
+import 'package:photalchemy/features/exploration/domain/rarity_policy.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({
@@ -6,11 +8,27 @@ class ExplorePage extends StatefulWidget {
     this.hasPermission = true,
     this.onRequestPermission,
     this.onCapture,
+    this.locationPermission = LocationPermission.granted,
+    this.currentCellName = 'Campus Plaza',
+    this.currentCellKey,
+    this.currentCellCaptures = 0,
+    this.repeatDecayThreshold = 4,
+    this.availableCells = const [],
+    this.onSelectCell,
+    this.onToggleLocationOptOut,
   });
 
   final bool hasPermission;
   final VoidCallback? onRequestPermission;
   final VoidCallback? onCapture;
+  final LocationPermission locationPermission;
+  final String currentCellName;
+  final String? currentCellKey;
+  final int currentCellCaptures;
+  final int repeatDecayThreshold;
+  final List<ExplorationCellPreset> availableCells;
+  final ValueChanged<ExplorationCellPreset>? onSelectCell;
+  final ValueChanged<bool>? onToggleLocationOptOut;
 
   @override
   State<ExplorePage> createState() => _ExplorePageState();
@@ -78,6 +96,10 @@ class _ExplorePageState extends State<ExplorePage> {
 
     return Column(
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: _buildLocationBanner(context),
+        ),
         Expanded(
           child: Container(
             margin: const EdgeInsets.all(16),
@@ -129,6 +151,97 @@ class _ExplorePageState extends State<ExplorePage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildLocationBanner(BuildContext context) {
+    final isGranted = widget.locationPermission == LocationPermission.granted;
+    final isDepleted =
+        isGranted && widget.currentCellCaptures >= widget.repeatDecayThreshold;
+    final cellLabel = isGranted && widget.currentCellKey != null
+        ? '${widget.currentCellName} (${widget.currentCellKey})'
+        : 'Privacy Fallback Mode (No GPS)';
+    final statusLabel = !isGranted
+        ? 'Color-only baseline rarity active'
+        : isDepleted
+            ? 'Cell depleted (${widget.currentCellCaptures}/${widget.repeatDecayThreshold}) — anti-farming decay active (Common cap)'
+            : 'Exploration bonus active (${widget.currentCellCaptures}/${widget.repeatDecayThreshold} captures in ~1.1km cell)';
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  !isGranted
+                      ? Icons.location_off_outlined
+                      : isDepleted
+                          ? Icons.warning_amber_rounded
+                          : Icons.explore_outlined,
+                  size: 20,
+                  color: !isGranted
+                      ? Theme.of(context).colorScheme.outline
+                      : isDepleted
+                          ? Colors.orange
+                          : Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        cellLabel,
+                        key: const Key('explore_cell_label'),
+                        style: Theme.of(context).textTheme.labelLarge,
+                      ),
+                      Text(
+                        statusLabel,
+                        key: const Key('explore_rarity_status'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                if (widget.onToggleLocationOptOut != null)
+                  FilterChip(
+                    key: const Key('location_opt_out_chip'),
+                    label: Text(isGranted ? 'Location On' : 'Opted Out'),
+                    selected: isGranted,
+                    onSelected: (enabled) =>
+                        widget.onToggleLocationOptOut!(!enabled),
+                  ),
+              ],
+            ),
+            if (isGranted &&
+                widget.availableCells.isNotEmpty &&
+                widget.onSelectCell != null) ...[
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: widget.availableCells.map((preset) {
+                    final selected = preset.cellKey == widget.currentCellKey;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: ChoiceChip(
+                        key: Key('cell_chip_${preset.cellKey}'),
+                        label: Text(preset.name),
+                        selected: selected,
+                        onSelected: (_) => widget.onSelectCell!(preset),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

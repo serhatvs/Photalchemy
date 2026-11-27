@@ -8,7 +8,8 @@ The COMP205 syllabus requires **three genuine ADRs with each of P1, P2 and P3**.
 3. [P1-03: SafeFallbackPolicy Wrapper and Runtime Action Whitelisting](P1-03-safe-fallback-policy.md) — Rejected direct engine mutation tool-calling in favor of decoupled observations, whitelisted action validation, and automated timeout fallbacks.
 
 ## Milestone P2 Records
-*(Planned for P2 implementation)*
+1. [P2-01: Privacy-Preserving LocationService Abstraction and Multi-Cell Anti-Farming Controls](P2-01-privacy-preserving-location-service.md) — Rejected continuous fine-grained GPS breadcrumb streaming in favor of on-demand ~1.1 km coarse `LocationSnapshot` reads, runtime privacy opt-out, and deterministic multi-cell travel.
+2. [P2-02: Immutable Firestore Battle History Subcollection and Event-Driven Opt-In FCM Alerts](P2-02-firestore-battle-history-and-fcm-events.md) — Rejected mutable profile win/loss counters and unsolicited background timers in favor of append-only `/users/{userId}/battles/{battleId}` records and consent-gated gameplay notifications.
 
 ## Milestone P3 Records
 *(Planned for P3 implementation)*
